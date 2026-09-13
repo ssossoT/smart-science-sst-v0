@@ -1,0 +1,53 @@
+rules_version = '2';
+
+// 스마트과학반 LAB - Cloud Storage 보안 규칙
+//
+//  public/   : 학생에게 공개하는 활동지/대표이미지 (교사만 업로드, 로그인 학생은 읽기만)
+//  teacher/  : 교사 전용 첨부파일 (교사만 읽기/쓰기)
+//  그 외 경로는 모두 차단한다. 학생은 어떤 경로에도 파일을 업로드할 수 없다.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    function isActiveStudent() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/students/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/students/$(request.auth.uid)).data.status == 'active';
+    }
+
+    function allowedType() {
+      return request.resource.contentType.matches('application/pdf')
+        || request.resource.contentType.matches('image/.*')
+        || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*')
+        || request.resource.contentType.matches('application/haansoft.*')
+        || request.resource.contentType.matches('application/x-hwp.*');
+    }
+
+    // 학생 공개 자료
+    match /public/{allPaths=**} {
+      allow read: if isAdmin() || isActiveStudent();
+      allow write: if isAdmin()
+                   && request.resource.size < 20 * 1024 * 1024
+                   && allowedType();
+      allow delete: if isAdmin();
+    }
+
+    // 교사 전용 자료
+    match /teacher/{allPaths=**} {
+      allow read: if isAdmin();
+      allow write: if isAdmin()
+                   && request.resource.size < 20 * 1024 * 1024
+                   && allowedType();
+      allow delete: if isAdmin();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

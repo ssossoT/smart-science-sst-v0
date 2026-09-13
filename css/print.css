@@ -1,0 +1,126 @@
+/* ==========================================================================
+   포트폴리오 인쇄 / PDF 저장용
+   브라우저 인쇄 → PDF로 저장 시 관리 UI를 제거하고 문서처럼 출력한다.
+   ========================================================================== */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 14mm 16mm;
+  }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    font-size: 10.5pt;
+    color: #000;
+  }
+
+  /* 화면 전용 요소 숨김 */
+  .topbar,
+  .sidebar,
+  .scrim,
+  .view-head,
+  .tabs,
+  .filterbar,
+  .btn,
+  .chip,
+  .no-print,
+  #toast-root,
+  .modal-backdrop,
+  .s-nav,
+  .s-top {
+    display: none !important;
+  }
+
+  .app,
+  .app-body,
+  .main,
+  .view,
+  .s-app,
+  .s-view {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .card,
+  .section {
+    border: 1px solid #cfd8e0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a { color: #000 !important; text-decoration: none !important; }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #555;
+    word-break: break-all;
+  }
+
+  .pf-doc { display: block !important; }
+
+  .pf-cover {
+    text-align: center;
+    padding: 38mm 0 20mm;
+    break-after: page;
+    page-break-after: always;
+  }
+  .pf-cover h1 { font-size: 26pt; letter-spacing: -.02em; }
+  .pf-cover .sub { font-size: 12pt; color: #444; margin-top: 6mm; }
+  .pf-cover .meta { font-size: 10pt; color: #555; margin-top: 18mm; line-height: 2; }
+
+  .pf-entry {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+    break-before: page;
+    page-break-before: always;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 0 8mm !important;
+  }
+  .pf-entry:first-of-type {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  .pf-entry h2 {
+    font-size: 15pt; border-bottom: 1.6pt solid #0e7490;
+    padding-bottom: 2mm; margin-bottom: 3mm;
+  }
+  .pf-entry h3 {
+    font-size: 11pt; color: #0e7490; margin: 4mm 0 1.5mm;
+  }
+  .pf-entry .pre-wrap { font-size: 10pt; line-height: 1.7; }
+
+  .pf-photos { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 3mm !important; }
+  .pf-photos img { width: 100% !important; height: 36mm !important; object-fit: cover !important; border: 1px solid #ccc; }
+
+  table.tbl { font-size: 9.5pt; }
+  table.tbl thead th { background: #eef2f6 !important; position: static !important; }
+  table.tbl th, table.tbl td { border-bottom: 1px solid #d8e0e8 !important; padding: 1.6mm 2mm; }
+
+  .badge, .tag {
+    border: 1px solid #bbb !important; background: #fff !important; color: #333 !important;
+  }
+
+  .progress { border: 1px solid #bbb; }
+  .progress > i { background: #777 !important; }
+
+  .print-footer {
+    display: block !important;
+    margin-top: 8mm; padding-top: 3mm;
+    border-top: 1px solid #ccc;
+    font-size: 8.5pt; color: #555; line-height: 1.7;
+  }
+}
+
+/* 화면에서는 인쇄 전용 요소를 숨긴다 */
+.print-only { display: none; }
+.print-footer { display: none; }

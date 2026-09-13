@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="중학교 방과후학교 스마트과학반 운영 관리 시스템">
+<meta name="robots" content="noindex">
+<title>스마트과학반 LAB</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e7490'/><text x='16' y='22' font-size='15' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>SL</text></svg>">
+<link rel="stylesheet" href="./css/common.css">
+</head>
+<body>
+
+<div class="landing">
+
+  <header class="landing-head">
+    <span class="brand">
+      <span class="brand-mark" data-brand-mark>SL</span>
+      <span data-site-name>스마트과학반 LAB</span>
+    </span>
+  </header>
+
+  <main class="landing-main">
+
+    <div class="landing-title">
+      <h1><span data-site-name>스마트과학반 LAB</span></h1>
+      <p id="intro-text">실험으로 과학을 직접 확인하는 중학교 방과후 활동입니다.</p>
+    </div>
+
+    <nav class="gate" aria-label="이용자 선택">
+      <a class="gate-card" href="./teacher.html">
+        <span class="k">Teacher</span>
+        <h2>선생님용</h2>
+        <p>수업 계획, 준비물과 구매 관리, 수업 기록, 학생 기록, 포트폴리오</p>
+        <span class="go">들어가기 →</span>
+      </a>
+
+      <a class="gate-card" href="./student.html">
+        <span class="k">Student</span>
+        <h2>학생용</h2>
+        <p>일정 확인, 오늘의 활동, 활동자료와 사진, 활동 결과, 간이보고서</p>
+        <span class="go">들어가기 →</span>
+      </a>
+    </nav>
+
+    <section class="landing-info" aria-label="운영 안내">
+      <div class="stat">
+        <div class="k">운영 학년도</div>
+        <div class="v" id="info-year">—</div>
+      </div>
+      <div class="stat">
+        <div class="k">운영 기간</div>
+        <div class="v" id="info-period" style="font-size:15px">—</div>
+      </div>
+      <div class="stat">
+        <div class="k">다음 일정</div>
+        <div class="v" id="info-next" style="font-size:15px">—</div>
+        <div class="s" id="info-next-sub"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer" id="footer"></footer>
+</div>
+
+<script type="module">
+import { firebaseReady, initFirebase, getDb, doc, getDoc, DEFAULT_SETTINGS } from './js/firebase-service.js';
+import { applyBranding, studentFooterHtml } from './js/common.js';
+import { fmtDate, relativeDay, esc } from './js/ui.js';
+
+const footer = document.getElementById('footer');
+
+function render(settings, nextSession) {
+  applyBranding(settings);
+
+  document.getElementById('intro-text').textContent =
+    settings.intro || DEFAULT_SETTINGS.intro;
+
+  document.getElementById('info-year').textContent =
+    settings.year ? `${settings.year}학년도` : '—';
+
+  const start = settings.periodStart ? fmtDate(settings.periodStart, { withWeek: false }) : '';
+  const end = settings.periodEnd ? fmtDate(settings.periodEnd, { withWeek: false }) : '';
+  document.getElementById('info-period').textContent =
+    start && end ? `${start} ~ ${end}` : '—';
+
+  const nextEl = document.getElementById('info-next');
+  const subEl = document.getElementById('info-next-sub');
+  if (nextSession?.date) {
+    nextEl.textContent = fmtDate(nextSession.date);
+    subEl.textContent = [relativeDay(nextSession.date), nextSession.periodLabel].filter(Boolean).join(' · ');
+  } else {
+    nextEl.textContent = '—';
+    subEl.textContent = '';
+  }
+
+  footer.innerHTML = studentFooterHtml(settings);
+}
+
+async function boot() {
+  // 첫 화면은 로그인 없이 열리므로 settings/public 문서만 읽는다.
+  let settings = { ...DEFAULT_SETTINGS };
+  let next = null;
+
+  if (firebaseReady()) {
+    try {
+      initFirebase();
+      const snap = await getDoc(doc(getDb(), 'settings', 'public'));
+      if (snap.exists()) {
+        const data = snap.data();
+        settings = { ...settings, ...data };
+        next = data.nextSession || null;
+      }
+    } catch (e) {
+      console.warn('[landing] 안내 정보를 불러오지 못했습니다.', e);
+    }
+  }
+  render(settings, next);
+}
+
+boot();
+</script>
+</body>
+</html>

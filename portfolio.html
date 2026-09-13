@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>포트폴리오 · 스마트과학반 LAB</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e7490'/><text x='16' y='22' font-size='15' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>SL</text></svg>">
+<link rel="stylesheet" href="./css/common.css">
+<link rel="stylesheet" href="./css/teacher.css">
+<link rel="stylesheet" href="./css/print.css">
+<style>
+  body { background: var(--bg); }
+  .pf-page { max-width: 940px; margin: 0 auto; padding: 18px 18px 48px; }
+  .pf-toolbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 18px; margin-bottom: 14px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  @media print { .pf-page { max-width: none; padding: 0; } }
+</style>
+</head>
+<body>
+
+<div class="pf-toolbar no-print" id="toolbar" hidden>
+  <span class="brand">
+    <span class="brand-mark" data-brand-mark>SL</span>
+    <span data-site-name>스마트과학반 LAB</span>
+  </span>
+  <span class="badge accent">포트폴리오</span>
+  <div class="grow"></div>
+  <label class="check"><input type="checkbox" id="opt-photos" checked><span>사진 포함</span></label>
+  <label class="check"><input type="checkbox" id="opt-cover" checked><span>표지 포함</span></label>
+  <button class="btn" id="print-btn" type="button">인쇄 / PDF로 저장</button>
+  <a class="btn" href="./teacher.html">선생님 화면</a>
+</div>
+
+<div class="pf-page" id="page">
+  <div class="auth-shell" id="boot" style="min-height:60vh">
+    <div class="flex items-center gap-10 muted"><span class="spinner"></span> 불러오는 중…</div>
+  </div>
+</div>
+
+<script type="module">
+import {
+  firebaseReady, initFirebase, loadSettings, listSessions, listAllPrivate,
+  listAllReflections, listStudents, isAdminUid
+} from './js/firebase-service.js';
+import { watchAuth, renderSetupNotice } from './js/auth-service.js';
+import { applyBranding } from './js/common.js';
+import { buildPortfolio, portfolioSessions } from './js/portfolio.js';
+import { $, el, mount, emptyState } from './js/ui.js';
+
+const page = $('#page');
+const toolbar = $('#toolbar');
+let data = null;
+
+function renderDoc() {
+  if (!data) return;
+  const withPhotos = $('#opt-photos').checked;
+  const withCover = $('#opt-cover').checked;
+  const sessions = portfolioSessions(data.sessions);
+
+  if (!sessions.length) {
+    mount(page, el('div', { class: 'card' }, [
+      emptyState('포트폴리오에 넣을 활동이 없습니다.',
+        '수업 상태를 "수업 완료" 또는 "기록 보관" 으로 바꾸면 이곳에 표시됩니다.',
+        el('a', { class: 'btn btn-primary mt-8', href: './teacher.html#/plan' }, ['전체 계획으로 이동']))
+    ]));
+    return;
+  }
+
+  mount(page, buildPortfolio({
+    settings: data.settings,
+    sessions,
+    privates: data.privates,
+    reflections: data.reflections,
+    studentCount: data.students.filter(s => s.status !== 'inactive').length,
+    withPhotos,
+    withCover
+  }));
+}
+
+$('#print-btn').addEventListener('click', () => window.print());
+$('#opt-photos').addEventListener('change', renderDoc);
+$('#opt-cover').addEventListener('change', renderDoc);
+
+function boot() {
+  if (!firebaseReady()) { renderSetupNotice(document.body); return; }
+  initFirebase();
+
+  watchAuth(async (user) => {
+    if (!user) {
+      mount(page, el('div', { class: 'card' }, [
+        emptyState('로그인이 필요합니다.', '선생님 화면에서 Google 계정으로 로그인해 주세요.',
+          el('a', { class: 'btn btn-primary mt-8', href: './teacher.html' }, ['선생님 화면으로 이동']))
+      ]));
+      return;
+    }
+    if (!(await isAdminUid(user.uid))) {
+      mount(page, el('div', { class: 'card' }, [
+        emptyState('관리자 권한이 없습니다.', '이 계정은 관리자로 등록되어 있지 않습니다.',
+          el('a', { class: 'btn mt-8', href: './index.html' }, ['처음 화면으로']))
+      ]));
+      return;
+    }
+
+    try {
+      const settings = await loadSettings({ force: true });
+      applyBranding(settings, { suffix: '포트폴리오' });
+      const year = Number(settings.year) || new Date().getFullYear();
+      const [sessions, reflections, students] = await Promise.all([
+        listSessions(year), listAllReflections(), listStudents(year)
+      ]);
+      const privates = await listAllPrivate(sessions.map(s => s.id));
+      data = { settings, sessions, reflections, students, privates };
+      toolbar.hidden = false;
+      renderDoc();
+    } catch (e) {
+      console.error('[portfolio] 불러오기 실패', e);
+      mount(page, el('div', { class: 'card' }, [
+        emptyState('기록을 불러오지 못했습니다.', '잠시 후 다시 시도해 주세요.',
+          el('button', { class: 'btn mt-8', onclick: () => location.reload() }, ['다시 시도']))
+      ]));
+    }
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

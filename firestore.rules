@@ -1,0 +1,139 @@
+rules_version = '2';
+
+// 스마트과학반 LAB - Firestore 보안 규칙
+//
+// 핵심 원칙
+//  1) 비로그인 사용자는 어떤 데이터에도 접근할 수 없다.
+//  2) 교사 전용 데이터(구매/예산/재고/메모/성찰)는 sessions/{id}/private/teacher 로 분리하며
+//     학생 계정으로는 읽기 자체가 불가능하다.
+//  3) 학생은 공개된 수업(isPublic == true)과 자기 자신의 보고서만 접근할 수 있다.
+//  4) 학생 로그인 별칭(studentLoginAliases)은 클라이언트에서 절대 읽을 수 없다.
+//     오직 서버 Admin SDK 만 접근한다.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function studentDoc() {
+      return get(/databases/$(database)/documents/students/$(request.auth.uid)).data;
+    }
+
+    function isStudent() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/students/$(request.auth.uid));
+    }
+
+    function isActiveStudent() {
+      return isStudent() && studentDoc().status == 'active';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── 관리자 명단 ──────────────────────────────────────────────
+    // 본인 문서 존재 여부만 확인할 수 있고, 추가/삭제는 Firebase Console 에서만 한다.
+    match /admins/{uid} {
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow write: if false;
+    }
+
+    // ── 사이트 설정 ──────────────────────────────────────────────
+    // API KEY 는 이곳에 저장하지 않는다.
+    //
+    // settings/public : 첫 화면 안내용. 사이트명·학교명·운영기간·다음 일정만 담는다.
+    //                   로그인 전에도 읽어야 하므로 공개하며, 예산 등은 넣지 않는다.
+    match /settings/public {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // settings/site : 총예산·자동 로그아웃 시간 등 운영 설정. 로그인 사용자만 읽는다.
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── 학생 로그인 별칭 (서버 전용) ─────────────────────────────
+    match /studentLoginAliases/{aliasId} {
+      allow read, write: if false;
+    }
+
+    // ── 학생 명부 ────────────────────────────────────────────────
+    // 학생은 자기 문서만 읽는다. 다른 학생의 이름/학번을 조회할 수 없다.
+    // 생성·수정은 서버 API(Admin SDK)에서만 수행한다.
+    match /students/{uid} {
+      allow get: if isAdmin() || isOwner(uid);
+      allow list: if isAdmin();
+      allow write: if false;
+    }
+
+    // ── 수업(학생 공개 영역) ─────────────────────────────────────
+    match /sessions/{sessionId} {
+      allow read: if isAdmin()
+                  || (isActiveStudent() && resource.data.isPublic == true);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── 수업(교사 전용 영역) ─────────────────────────────────────
+    // collection group 조회까지 포함해 관리자만 접근할 수 있다.
+    match /{path=**}/private/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── 학생 간이보고서 ──────────────────────────────────────────
+    // 문서 ID 규칙: {sessionId}_{studentUid}
+    match /reflections/{reflectionId} {
+      // get: 아직 작성하지 않은 보고서를 열어보는 경우 resource 가 null 이다.
+      //      이때 resource.data 에 접근하면 규칙이 오류를 내며 접근 거부가 되므로
+      //      null 검사를 먼저 한다. (문서가 없으면 어차피 빈 결과가 돌아간다.)
+      allow get: if isAdmin()
+                 || (isSignedIn()
+                     && (resource == null || resource.data.studentUid == request.auth.uid));
+
+      // list: Firestore 는 질의 조건이 이 규칙을 만족함을 증명하도록 요구한다.
+      //       따라서 학생은 where('studentUid','==', 본인 uid) 질의만 성공한다.
+      allow list: if isAdmin()
+                  || (isSignedIn() && resource.data.studentUid == request.auth.uid);
+
+      allow create: if isAdmin()
+        || (isActiveStudent()
+            && request.resource.data.studentUid == request.auth.uid
+            && reflectionId == request.resource.data.sessionId + '_' + request.auth.uid
+            && request.resource.data.sessionId is string
+            && request.resource.data.answers is list
+            && request.resource.data.answers.size() <= 20);
+
+      allow update: if isAdmin()
+        || (isActiveStudent()
+            && resource.data.studentUid == request.auth.uid
+            && request.resource.data.studentUid == request.auth.uid
+            && request.resource.data.sessionId == resource.data.sessionId
+            && request.resource.data.answers is list
+            && request.resource.data.answers.size() <= 20);
+
+      allow delete: if isAdmin();
+    }
+
+    // ── 교사 전용 컬렉션 ─────────────────────────────────────────
+    match /inventory/{itemId}      { allow read, write: if isAdmin(); }
+    match /templates/{templateId}  { allow read, write: if isAdmin(); }
+    match /purchaseItems/{itemId}  { allow read, write: if isAdmin(); }
+    match /portfolios/{docId}      { allow read, write: if isAdmin(); }
+    match /programs/{programId}    { allow read, write: if isAdmin(); }
+
+    // 위에서 명시되지 않은 모든 경로는 접근 불가.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

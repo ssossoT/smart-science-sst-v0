@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>선생님용 · 스마트과학반 LAB</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e7490'/><text x='16' y='22' font-size='15' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>SL</text></svg>">
+<link rel="stylesheet" href="./css/common.css">
+<link rel="stylesheet" href="./css/teacher.css">
+<link rel="stylesheet" href="./css/print.css">
+</head>
+<body>
+
+<!-- ── 로그인 화면 ─────────────────────────────────────────────────── -->
+<div class="auth-shell" id="login-screen" hidden>
+  <div class="auth-card">
+    <span class="brand" style="margin-bottom:14px">
+      <span class="brand-mark" data-brand-mark>SL</span>
+      <span data-site-name>스마트과학반 LAB</span>
+    </span>
+    <h1>선생님용 로그인</h1>
+    <p class="sub">등록된 Google 계정으로 로그인해 주세요.</p>
+
+    <div class="auth-form">
+      <button class="google-btn" id="google-login" type="button">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Google 계정으로 로그인
+      </button>
+      <div class="auth-error" id="login-error" hidden></div>
+    </div>
+
+    <a class="auth-back" href="./index.html">← 처음 화면으로</a>
+  </div>
+</div>
+
+<!-- ── 앱 셸 ───────────────────────────────────────────────────────── -->
+<div class="app" id="app" hidden>
+
+  <header class="topbar">
+    <button class="btn btn-icon menu-toggle" id="menu-toggle" type="button" aria-label="메뉴 열기">☰</button>
+    <span class="brand">
+      <span class="brand-mark" data-brand-mark>SL</span>
+      <span data-site-name>스마트과학반 LAB</span>
+    </span>
+    <span class="year-pill" id="top-year"></span>
+    <div class="spacer"></div>
+    <div class="who">
+      <span class="avatar" id="top-avatar"></span>
+      <span class="truncate" id="top-name"></span>
+    </div>
+    <button class="btn btn-sm" id="logout-btn" type="button">로그아웃</button>
+  </header>
+
+  <div class="app-body">
+    <aside class="sidebar" id="sidebar">
+      <nav id="nav"></nav>
+      <div class="sidebar-foot">
+        <a class="btn btn-sm btn-block" href="./student.html" target="_blank" rel="noopener">학생 화면 열기</a>
+        <a class="btn btn-sm btn-block" href="./index.html">처음 화면</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="view-head" id="view-head"></div>
+      <div class="view" id="view"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ── 권한 없음 안내 ──────────────────────────────────────────────── -->
+<div class="auth-shell" id="denied-screen" hidden>
+  <div class="auth-card">
+    <h1>관리자 권한이 없습니다</h1>
+    <p class="sub" style="margin-top:8px">
+      이 계정은 관리자로 등록되어 있지 않습니다.<br>
+      Firebase Console 에서 <code>admins/{uid}</code> 문서를 만들어야 접근할 수 있습니다.
+    </p>
+    <div class="notice mt-16" style="word-break:break-all">
+      로그인한 계정 UID<br>
+      <strong id="denied-uid" class="num"></strong>
+    </div>
+    <div class="auth-form">
+      <button class="btn btn-block" id="denied-copy" type="button">UID 복사</button>
+      <button class="btn btn-primary btn-block" id="denied-logout" type="button">다른 계정으로 로그인</button>
+    </div>
+    <a class="auth-back" href="./index.html">← 처음 화면으로</a>
+  </div>
+</div>
+
+<div id="boot-screen" class="auth-shell">
+  <div class="flex items-center gap-10 muted"><span class="spinner"></span> 불러오는 중…</div>
+</div>
+
+<script type="module" src="./js/teacher.js"></script>
+</body>
+</html>

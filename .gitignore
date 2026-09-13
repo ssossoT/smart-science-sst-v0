@@ -1,0 +1,28 @@
+# 의존성
+node_modules/
+
+# 환경변수 - 절대 올리지 않습니다
+.env
+.env.*
+!.env.example
+
+# Firebase 서비스 계정 키 - 절대 올리지 않습니다
+*serviceAccount*.json
+*service-account*.json
+*firebase-adminsdk*.json
+cors.json
+
+# Vercel
+.vercel/
+
+# Firebase CLI
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# 편집기 / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
