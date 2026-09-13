@@ -142,22 +142,32 @@
         </div>
       </div>
 
-      <div class="lp-columns-2">
-        <div class="lp-panel" id="lp-next-panel" hidden>
-          <div class="lp-panel-head">🚀 다음 활동</div>
-          <div class="lp-next-photo" id="next-photo">🚀</div>
-          <div class="lp-next-body">
-            <div class="d" id="next-date">—</div>
-            <h4 id="next-title">—</h4>
-            <p id="next-guide"></p>
+      <div class="lp-columns-3">
+        <div class="lp-panel">
+          <div class="lp-panel-head">🕓 지난 일정</div>
+          <div class="lp-week" id="lp-past">
+            <div class="lp-week-empty">아직 지난 일정이 없습니다.</div>
           </div>
+        </div>
+
+        <div class="lp-panel" id="lp-next-panel">
+          <div class="lp-panel-head">🚀 다음 일정</div>
+          <div id="lp-next-content">
+            <div class="lp-next-photo" id="next-photo">🚀</div>
+            <div class="lp-next-body">
+              <div class="d" id="next-date">—</div>
+              <h4 id="next-title">—</h4>
+              <p id="next-guide"></p>
+            </div>
+          </div>
+          <div class="lp-week-empty" id="lp-next-empty" hidden>다음으로 예정된 일정이 없습니다.</div>
         </div>
 
         <div class="lp-panel">
           <div class="lp-panel-head">
             <span>🗓️ 다가오는 일정</span>
             <div class="grow"></div>
-            <a class="lp-link" href="./student.html#/schedule">전체 일정 보기 →</a>
+            <a class="lp-link" href="./student.html#/schedule">전체보기 →</a>
           </div>
           <div class="lp-week" id="lp-week">
             <div class="lp-week-empty">등록된 일정이 없습니다.</div>
@@ -334,10 +344,11 @@ async function boot() {
     photoEl.querySelector('.emoji').textContent = fieldEmoji(current.field);
   }
 
-  // 다음 활동
+  // 다음 일정
   const next = current ? nextSessionAfter(sessions, current.id) : sessions.find(s => !s.noClass);
+  document.getElementById('lp-next-content').hidden = !next;
+  document.getElementById('lp-next-empty').hidden = !!next;
   if (next) {
-    document.getElementById('lp-next-panel').hidden = false;
     document.getElementById('next-photo').textContent = fieldEmoji(next.field);
     document.getElementById('next-date').textContent = fmtDate(next.date, { withYear: true }) + (next.periodLabel ? ` · ${next.periodLabel}` : '');
     document.getElementById('next-title').textContent = sessionTitle(next);
@@ -351,14 +362,28 @@ async function boot() {
     .slice(0, 8);
   const weekEl = document.getElementById('lp-week');
   if (upcoming.length) {
-    weekEl.innerHTML = upcoming.map(s => `
-      <div class="lp-week-row">
-        <span class="day">${esc(fmtDate(s.date).slice(-3))} ${Number(s.date.slice(5,7))}/${Number(s.date.slice(8,10))}</span>
-        <span class="ico">${s.noClass ? '💤' : fieldEmoji(s.field)}</span>
-        <span class="t">${esc(sessionTitle(s))}</span>
-      </div>`).join('');
+    weekEl.innerHTML = renderWeekRows(upcoming);
   }
 
+  // 지난 일정 (최근 5개)
+  const past = sessions
+    .filter(s => s.date && new Date(`${s.date}T00:00:00`) < today)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
+  const pastEl = document.getElementById('lp-past');
+  if (past.length) {
+    pastEl.innerHTML = renderWeekRows(past);
+  }
+
+}
+
+function renderWeekRows(list) {
+  return list.map(s => `
+    <div class="lp-week-row">
+      <span class="day">${esc(fmtDate(s.date).slice(-3))} ${Number(s.date.slice(5,7))}/${Number(s.date.slice(8,10))}</span>
+      <span class="ico">${s.noClass ? '💤' : fieldEmoji(s.field)}</span>
+      <span class="t">${esc(sessionTitle(s))}</span>
+    </div>`).join('');
 }
 
 boot();

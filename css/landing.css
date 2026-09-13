@@ -325,6 +325,17 @@
   align-items: start;
 }
 
+.lp-columns-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.lp-columns-3 .lp-panel-head { flex-wrap: wrap; row-gap: 2px; }
+.lp-columns-3 .lp-panel-head > span:first-child { white-space: nowrap; }
+.lp-columns-3 .lp-week-row { padding: 10px 12px; gap: 6px; }
+.lp-columns-3 .lp-week-row .day { width: 42px; font-size: 11.5px; }
+
 .lp-panel {
   background: #fff; border: 1px solid var(--lp-border); border-radius: 16px;
   box-shadow: var(--lp-shadow);
@@ -362,7 +373,10 @@
   font-weight: 800; color: var(--lp-blue-dark);
 }
 .lp-week-row .ico { flex: none; font-size: 14px; }
-.lp-week-row .t { flex: 1; min-width: 0; font-weight: 600; }
+.lp-week-row .t {
+  flex: 1; min-width: 0; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .lp-week-empty { padding: 20px 16px; text-align: center; font-size: 12.5px; color: var(--lp-muted); }
 
 /* ── 푸터 ────────────────────────────────────────────────────────────── */
@@ -403,6 +417,7 @@
   .lp-current { grid-template-columns: 1fr; }
   .lp-current-photo { min-height: 160px; }
   .lp-columns-2 { grid-template-columns: 1fr; }
+  .lp-columns-3 { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 720px) {
@@ -415,6 +430,7 @@
   .lp-feature { padding: 10px 6px; }
   .lp-feature span { display: none; }
   .lp-space-msg { max-width: 100%; }
+  .lp-columns-3 { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 460px) {
