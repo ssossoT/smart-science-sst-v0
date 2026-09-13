@@ -26,3 +26,6 @@ firestore-debug.log
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 미리보기용 임시 파일 (Artifact 미리보기 갱신용, 저장소에는 올리지 않음)
+.artifact-preview.html
