@@ -13,12 +13,12 @@
    ========================================================================== */
 
 export const firebaseConfig = {
-  apiKey: "여기에-붙여넣기",
-  authDomain: "여기에-붙여넣기.firebaseapp.com",
-  projectId: "여기에-붙여넣기",
-  storageBucket: "여기에-붙여넣기.firebasestorage.app",
-  messagingSenderId: "여기에-붙여넣기",
-  appId: "여기에-붙여넣기"
+  apiKey: "AIzaSyBiJ9pIHeeRCw5spDoCDTc3xMmaqdBPou4",
+  authDomain: "extra-school-activity.firebaseapp.com",
+  projectId: "extra-school-activity",
+  storageBucket: "extra-school-activity.firebasestorage.app",
+  messagingSenderId: "344545124234",
+  appId: "1:344545124234:web:83e4608116417319c77273"
 };
 
 /** 설정이 실제로 채워졌는지 확인한다. */
