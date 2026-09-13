@@ -1,53 +1,49 @@
 /* ==========================================================================
-   Firebase 초기화 + Firestore/Storage 접근 계층
-   화면 코드는 이 파일을 통해서만 데이터에 접근한다.
+   데이터 접근 계층 (이 브라우저의 localStorage 에 저장)
+   --------------------------------------------------------------------------
+   원래는 Firebase(Firestore/Auth)를 썼지만, 지금은 로그인이 정해진 계정
+   (교사: 성소연/0000, 학생: 학생 관리 화면에서 등록) 하나뿐인 단일 사용자
+   도구라 서버 없이 이 브라우저에만 실제로 저장한다.
+
+   화면 코드(teacher.js, student.js, views/*.js)는 예전과 똑같은 함수
+   이름으로 이 파일을 호출한다 — 저장 위치만 Firestore에서 localStorage로
+   바뀌었을 뿐, 호출하는 쪽은 손댈 필요가 없다.
+
+   ▶ 사진·활동지 업로드는 용량이 커서 브라우저 저장소에 그대로 담기 어렵다.
+     1.5MB 이하 파일만 데이터 URL로 저장하고, 그보다 크면 안내 메시지를
+     보여준다.
+   ▶ Gemini(초안 생성)·YouTube(영상 검색) 기능은 서버 API 키가 필요해
+     이 방식으로는 대신할 수 없다. 호출하면 "지금 사용할 수 없다"는
+     안내가 뜬다.
    ========================================================================== */
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
-  getAuth, browserLocalPersistence, browserSessionPersistence, setPersistence,
-  GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, linkWithPopup
-} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import {
-  getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
-  collection, query, where, orderBy, limit, writeBatch, serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
-import {
-  getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject
-} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js';
+  TEACHER_ACCOUNT, INITIAL_SETTINGS, INITIAL_SESSIONS, INITIAL_PRIVATES,
+  INITIAL_STUDENTS, INITIAL_INVENTORY
+} from './demo-data.js';
 
-import { firebaseConfig, isFirebaseConfigured } from './firebase-config.js';
+/* ── 인증 관련 이름 재수출 (호환용 스텁) ────────────────────────────────
+   auth-service.js / portfolio.html 이 이 이름들을 가져다 쓴다.
+   실제 로그인은 teacher.js/student.js 가 이름+비밀번호로 직접 처리하므로
+   여기서는 아무 것도 하지 않는 껍데기만 제공한다. */
 
-export {
-  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
-  collection, query, where, orderBy, limit, writeBatch, serverTimestamp,
-  GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, linkWithPopup,
-  setPersistence, browserLocalPersistence, browserSessionPersistence
-};
+export class GoogleAuthProvider { setCustomParameters() {} }
+export async function signInWithPopup() { throw new Error('사용할 수 없습니다.'); }
+export async function signInWithEmailAndPassword() { throw new Error('사용할 수 없습니다.'); }
+export async function signOut() {}
+export function onAuthStateChanged(auth, cb) { cb(null); return () => {}; }
+export async function linkWithPopup() { throw new Error('사용할 수 없습니다.'); }
+export async function setPersistence() {}
+export const browserLocalPersistence = {};
+export const browserSessionPersistence = {};
 
-/* ── 초기화 ──────────────────────────────────────────────────────────── */
+/* ── 초기화 (항상 준비된 상태) ───────────────────────────────────────── */
 
-let app = null, auth = null, db = null, storage = null;
-
-export function firebaseReady() { return isFirebaseConfigured(); }
-
-export function initFirebase() {
-  if (app) return { app, auth, db, storage };
-  if (!isFirebaseConfigured()) {
-    throw new Error('FIREBASE_NOT_CONFIGURED');
-  }
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  return { app, auth, db, storage };
-}
-
-export function getDb() { if (!db) initFirebase(); return db; }
-export function getAuthInstance() { if (!auth) initFirebase(); return auth; }
-export function getStorageInstance() { if (!storage) initFirebase(); return storage; }
+export function firebaseReady() { return true; }
+export function initFirebase() { return {}; }
+export function getDb() { return {}; }
+export function getAuthInstance() { return { currentUser: null }; }
+export function getStorageInstance() { return {}; }
 
 /* ── 상수 ────────────────────────────────────────────────────────────── */
 
@@ -91,97 +87,134 @@ export const DEFAULT_SETTINGS = {
   intro: '실험으로 과학을 직접 확인하는 중학교 방과후 활동입니다.'
 };
 
-/* ── 설정 ────────────────────────────────────────────────────────────── */
+/* ── 로컬 저장소 ─────────────────────────────────────────────────────── */
 
-let settingsCache = null;
+const DB_KEY = 'smartlab:db:v1';
 
-export async function loadSettings({ force = false } = {}) {
-  if (settingsCache && !force) return settingsCache;
+function freshDb() {
+  const sessions = {};
+  INITIAL_SESSIONS.forEach(s => { sessions[s.id] = { ...s }; });
+  const privates = {};
+  INITIAL_PRIVATES.forEach((p, id) => { privates[id] = { ...p, materials: (p.materials || []).map(m => ({ ...m })) }; });
+  const students = {};
+  INITIAL_STUDENTS.forEach(s => { students[s.uid] = { ...s }; });
+  const inventory = {};
+  INITIAL_INVENTORY.forEach(i => { inventory[i.id] = { ...i }; });
+  return {
+    settings: { ...INITIAL_SETTINGS },
+    sessions, privates, students,
+    reflections: {},
+    inventory,
+    templates: {}
+  };
+}
+
+let dbCache = null;
+
+function loadDb() {
+  if (dbCache) return dbCache;
   try {
-    const snap = await getDoc(doc(getDb(), 'settings', 'site'));
-    settingsCache = snap.exists()
-      ? { ...DEFAULT_SETTINGS, ...snap.data() }
-      : { ...DEFAULT_SETTINGS };
-  } catch (e) {
-    console.warn('[settings] 불러오기 실패, 기본값 사용', e);
-    settingsCache = { ...DEFAULT_SETTINGS };
-  }
-  return settingsCache;
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) { dbCache = JSON.parse(raw); return dbCache; }
+  } catch { /* 저장소 접근 불가 환경 */ }
+  dbCache = freshDb();
+  persistDb();
+  return dbCache;
 }
 
-export function cachedSettings() { return settingsCache || { ...DEFAULT_SETTINGS }; }
-
-export async function saveSettings(patch) {
-  await setDoc(doc(getDb(), 'settings', 'site'), patch, { merge: true });
-  settingsCache = { ...cachedSettings(), ...patch };
-  return settingsCache;
+function persistDb() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(dbCache)); } catch { /* 저장소 접근 불가 환경 */ }
 }
 
-/* ── 권한 ────────────────────────────────────────────────────────────── */
-
-export async function isAdminUid(uid) {
-  if (!uid) return false;
-  try {
-    const snap = await getDoc(doc(getDb(), 'admins', uid));
-    return snap.exists();
-  } catch {
-    return false;
-  }
-}
-
-export async function getStudentDoc(uid) {
-  if (!uid) return null;
-  const snap = await getDoc(doc(getDb(), 'students', uid));
-  return snap.exists() ? { uid, ...snap.data() } : null;
-}
-
-/* ── 수업(공개 영역) ─────────────────────────────────────────────────── */
+function nowIso() { return new Date().toISOString(); }
+function newId(prefix) { return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`; }
+function withoutPassword(s) { const { password, ...rest } = s; return rest; }
 
 const byDate = (a, b) =>
   String(a.date || '').localeCompare(String(b.date || '')) ||
   (Number(a.order || 0) - Number(b.order || 0));
 
-/** 교사용: 전체 수업 */
-export async function listSessions(year) {
-  const base = collection(getDb(), 'sessions');
-  const q = year ? query(base, where('year', '==', Number(year))) : base;
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(byDate);
+/* ── 설정 ────────────────────────────────────────────────────────────── */
+
+export async function loadSettings() {
+  return { ...DEFAULT_SETTINGS, ...loadDb().settings };
 }
 
-/** 학생용: 공개된 수업만. 보안 규칙이 isPublic 조건을 요구한다. */
+export function cachedSettings() {
+  const db = loadDb();
+  return { ...DEFAULT_SETTINGS, ...db.settings };
+}
+
+export async function saveSettings(patch) {
+  const db = loadDb();
+  db.settings = { ...db.settings, ...patch };
+  persistDb();
+  return cachedSettings();
+}
+
+/* ── 권한 / 학생 계정 조회 ───────────────────────────────────────────── */
+
+/** 지금은 관리자 개념이 없다 (교사 계정이 하나뿐). */
+export async function isAdminUid() { return false; }
+
+export async function getStudentDoc(uid) {
+  const s = loadDb().students[uid];
+  return s ? withoutPassword(s) : null;
+}
+
+/** 학생 로그인 확인: teacher.js 의 성소연/0000 처럼, 이름+비밀번호를 직접 대조한다. */
+export async function checkStudentLogin(displayName, password) {
+  const db = loadDb();
+  const match = Object.values(db.students).find(s => s.displayName === displayName);
+  if (!match || match.password !== password || match.status === 'inactive') return null;
+  return withoutPassword(match);
+}
+
+/* ── 수업(공개 영역) ─────────────────────────────────────────────────── */
+
+/** 교사용: 전체 수업 */
+export async function listSessions(year) {
+  const db = loadDb();
+  return Object.values(db.sessions)
+    .filter(s => !year || Number(s.year) === Number(year))
+    .sort(byDate);
+}
+
+/** 학생용: 공개된 수업만 */
 export async function listPublicSessions(year) {
-  const base = collection(getDb(), 'sessions');
-  const snap = await getDocs(query(base, where('isPublic', '==', true)));
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
+  const db = loadDb();
+  return Object.values(db.sessions)
+    .filter(s => s.isPublic === true)
     .filter(s => !year || Number(s.year) === Number(year))
     .sort(byDate);
 }
 
 export async function getSession(id) {
-  const snap = await getDoc(doc(getDb(), 'sessions', id));
-  return snap.exists() ? { id, ...snap.data() } : null;
+  const s = loadDb().sessions[id];
+  return s ? { ...s } : null;
 }
 
 /** 공개 영역 저장. status 에 따라 isPublic 을 항상 함께 갱신한다. */
 export async function saveSessionPublic(id, data) {
+  const db = loadDb();
   const status = data.status || 'draft';
   const payload = {
     ...data,
+    id,
     status,
     isPublic: status !== 'draft',
-    updatedAt: new Date().toISOString()
+    updatedAt: nowIso()
   };
-  await setDoc(doc(getDb(), 'sessions', id), payload, { merge: true });
-  return payload;
+  db.sessions[id] = { ...(db.sessions[id] || {}), ...payload };
+  persistDb();
+  return { ...db.sessions[id] };
 }
 
 export async function deleteSession(id) {
-  const db = getDb();
-  // 교사 전용 하위 문서를 먼저 지운다.
-  await deleteDoc(doc(db, 'sessions', id, 'private', 'teacher')).catch(() => {});
-  await deleteDoc(doc(db, 'sessions', id));
+  const db = loadDb();
+  delete db.sessions[id];
+  delete db.privates[id];
+  persistDb();
 }
 
 /* ── 수업(교사 전용 영역) ────────────────────────────────────────────── */
@@ -214,42 +247,32 @@ export const EMPTY_PRIVATE = {
 };
 
 export async function getSessionPrivate(sessionId) {
-  const snap = await getDoc(doc(getDb(), 'sessions', sessionId, 'private', 'teacher'));
-  return snap.exists() ? { ...EMPTY_PRIVATE, ...snap.data() } : { ...EMPTY_PRIVATE };
+  const p = loadDb().privates[sessionId];
+  return p ? { ...EMPTY_PRIVATE, ...p } : { ...EMPTY_PRIVATE };
 }
 
 export async function saveSessionPrivate(sessionId, data) {
-  await setDoc(
-    doc(getDb(), 'sessions', sessionId, 'private', 'teacher'),
-    { ...data, updatedAt: new Date().toISOString() },
-    { merge: true }
-  );
+  const db = loadDb();
+  db.privates[sessionId] = { ...(db.privates[sessionId] || {}), ...data, updatedAt: nowIso() };
+  persistDb();
 }
 
 /** 모든 수업의 교사 전용 문서를 한 번에 가져온다 (준비물/구매 통합 화면용) */
 export async function listAllPrivate(sessionIds) {
-  const db = getDb();
-  const results = await Promise.all(
-    sessionIds.map(async id => {
-      try {
-        const snap = await getDoc(doc(db, 'sessions', id, 'private', 'teacher'));
-        return [id, snap.exists() ? { ...EMPTY_PRIVATE, ...snap.data() } : { ...EMPTY_PRIVATE }];
-      } catch {
-        return [id, { ...EMPTY_PRIVATE }];
-      }
-    })
-  );
-  return new Map(results);
+  const db = loadDb();
+  return new Map(sessionIds.map(id => [
+    id, db.privates[id] ? { ...EMPTY_PRIVATE, ...db.privates[id] } : { ...EMPTY_PRIVATE }
+  ]));
 }
 
 /* ── 학생 ────────────────────────────────────────────────────────────── */
 
 export async function listStudents(year) {
-  const snap = await getDocs(collection(getDb(), 'students'));
-  return snap.docs
-    .map(d => ({ uid: d.id, ...d.data() }))
+  const db = loadDb();
+  return Object.values(db.students)
     .filter(s => !year || Number(s.year) === Number(year))
-    .sort((a, b) => String(a.displayName || '').localeCompare(String(b.displayName || ''), 'ko'));
+    .sort((a, b) => String(a.displayName || '').localeCompare(String(b.displayName || ''), 'ko'))
+    .map(withoutPassword);
 }
 
 /* ── 간이보고서 ──────────────────────────────────────────────────────── */
@@ -260,110 +283,110 @@ export function reflectionId(sessionId, studentUid) {
 
 /** 교사용: 특정 수업의 모든 보고서 */
 export async function listReflectionsBySession(sessionId) {
-  const snap = await getDocs(
-    query(collection(getDb(), 'reflections'), where('sessionId', '==', sessionId))
-  );
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return Object.values(loadDb().reflections).filter(r => r.sessionId === sessionId);
 }
 
 /** 교사용: 전체 보고서 (제출 현황 집계) */
 export async function listAllReflections() {
-  const snap = await getDocs(collection(getDb(), 'reflections'));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return Object.values(loadDb().reflections);
 }
 
-/** 학생용: 내 보고서만. 규칙이 studentUid 조건을 요구한다. */
+/** 학생용: 내 보고서만 */
 export async function listMyReflections(uid) {
-  const snap = await getDocs(
-    query(collection(getDb(), 'reflections'), where('studentUid', '==', uid))
-  );
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return Object.values(loadDb().reflections).filter(r => r.studentUid === uid);
 }
 
 export async function getReflection(sessionId, studentUid) {
   const id = reflectionId(sessionId, studentUid);
-  const snap = await getDoc(doc(getDb(), 'reflections', id));
-  return snap.exists() ? { id, ...snap.data() } : null;
+  const r = loadDb().reflections[id];
+  return r ? { id, ...r } : null;
 }
 
 export async function saveReflection(sessionId, studentUid, payload) {
+  const db = loadDb();
   const id = reflectionId(sessionId, studentUid);
-  const ref = doc(getDb(), 'reflections', id);
-  const existing = await getDoc(ref);
-  const now = new Date().toISOString();
+  const existing = db.reflections[id];
+  const now = nowIso();
   const body = {
     sessionId,
     studentUid,
     answers: payload.answers || [],
     rating: Number(payload.rating) || 0,
     updatedAt: now,
-    createdAt: existing.exists() ? (existing.data().createdAt || now) : now
+    createdAt: existing?.createdAt || now
   };
-  await setDoc(ref, body, { merge: true });
+  db.reflections[id] = body;
+  persistDb();
   return { id, ...body };
 }
 
 /* ── 재고 ────────────────────────────────────────────────────────────── */
 
 export async function listInventory() {
-  const snap = await getDocs(collection(getDb(), 'inventory'));
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ko'));
+  const db = loadDb();
+  return Object.values(db.inventory).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ko'));
 }
 
 export async function saveInventoryItem(id, data) {
-  await setDoc(doc(getDb(), 'inventory', id), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
+  const db = loadDb();
+  const useId = id || newId('inv');
+  db.inventory[useId] = { ...(db.inventory[useId] || {}), ...data, id: useId, updatedAt: nowIso() };
+  persistDb();
+  return { ...db.inventory[useId] };
 }
 
 export async function deleteInventoryItem(id) {
-  await deleteDoc(doc(getDb(), 'inventory', id));
+  const db = loadDb();
+  delete db.inventory[id];
+  persistDb();
 }
 
 /* ── 실험 보관함 ─────────────────────────────────────────────────────── */
 
 export async function listTemplates() {
-  const snap = await getDocs(collection(getDb(), 'templates'));
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')));
+  const db = loadDb();
+  return Object.values(db.templates).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || '')));
 }
 
 export async function saveTemplate(id, data) {
-  await setDoc(doc(getDb(), 'templates', id), data, { merge: true });
+  const db = loadDb();
+  const useId = id || newId('tpl');
+  db.templates[useId] = { ...(db.templates[useId] || {}), ...data, id: useId };
+  persistDb();
 }
 
 export async function deleteTemplate(id) {
-  await deleteDoc(doc(getDb(), 'templates', id));
+  const db = loadDb();
+  delete db.templates[id];
+  persistDb();
 }
 
-/* ── Storage ─────────────────────────────────────────────────────────── */
+/* ── 파일 업로드 ─────────────────────────────────────────────────────── */
+/* 서버 저장소가 없어 브라우저에 데이터 URL로 담는다. 용량이 크면 담을 수
+   없어 안내만 하고 실패시킨다. */
 
-const MAX_UPLOAD = 20 * 1024 * 1024;
+const MAX_LOCAL_UPLOAD = 1.5 * 1024 * 1024;
 
-/**
- * 파일 업로드.
- * @param {'public'|'teacher'} scope 학생에게 보여줄 자료는 public
- */
 export async function uploadFile(file, scope, subPath) {
   if (!file) throw new Error('파일이 없습니다.');
-  if (file.size > MAX_UPLOAD) throw new Error('파일 크기는 20MB 이하만 업로드할 수 있습니다.');
-  const safeName = file.name.replace(/[^\w.가-힣\- ]/g, '_').slice(-80);
-  const path = `${scope}/${subPath}/${Date.now()}_${safeName}`;
-  const r = storageRef(getStorageInstance(), path);
-  await uploadBytes(r, file, { contentType: file.type || 'application/octet-stream' });
-  const url = await getDownloadURL(r);
-  return { url, path, name: file.name, size: file.size, type: file.type };
-}
-
-export async function deleteFile(path) {
-  if (!path) return;
-  await deleteObject(storageRef(getStorageInstance(), path)).catch(err => {
-    console.warn('[storage] 삭제 실패', err);
+  if (file.size > MAX_LOCAL_UPLOAD) {
+    throw new Error('이 브라우저 저장 모드에서는 1.5MB 이하 파일만 업로드할 수 있습니다.');
+  }
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'));
+    reader.readAsDataURL(file);
   });
+  const path = `${scope}/${subPath}/${Date.now()}_${file.name}`;
+  return { url: dataUrl, path, name: file.name, size: file.size, type: file.type };
 }
 
-/* ── 서버 API 호출 ───────────────────────────────────────────────────── */
+export async function deleteFile() {
+  // 데이터 URL은 세션 문서에서 참조를 지우기만 하면 된다. 별도 삭제가 필요 없다.
+}
+
+/* ── 서버 API (Gemini · YouTube · 학생 계정 관리) ───────────────────── */
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -373,38 +396,51 @@ export class ApiError extends Error {
   }
 }
 
+async function localAdminStudents(body) {
+  const db = loadDb();
+  const { action, uid, displayName, loginName, studentNo, year, status, password } = body;
+
+  if (action === 'create') {
+    if (!displayName || !loginName) throw new ApiError('이름을 모두 입력해 주세요.', 400);
+    if (!password || password.length < 6) throw new ApiError('비밀번호는 6자 이상이어야 합니다.', 400);
+    const newUid = newId('s');
+    db.students[newUid] = {
+      uid: newUid, displayName, loginName,
+      studentNo: studentNo || '', year: year || db.settings.year,
+      status: status || 'active', password, createdAt: nowIso()
+    };
+    persistDb();
+    return { ok: true, uid: newUid };
+  }
+
+  if (action === 'update') {
+    const s = db.students[uid];
+    if (!s) throw new ApiError('학생을 찾을 수 없습니다.', 404);
+    db.students[uid] = { ...s, displayName, loginName, studentNo, year, status };
+    persistDb();
+    return { ok: true };
+  }
+
+  if (action === 'resetPassword') {
+    const s = db.students[uid];
+    if (!s) throw new ApiError('학생을 찾을 수 없습니다.', 404);
+    if (!password || password.length < 6) throw new ApiError('비밀번호는 6자 이상이어야 합니다.', 400);
+    db.students[uid] = { ...s, password };
+    persistDb();
+    return { ok: true };
+  }
+
+  throw new ApiError('알 수 없는 요청입니다.', 400);
+}
+
 /**
- * Firebase ID Token 을 붙여 /api 를 호출한다.
- * 실패 시 서버가 내려준 사용자용 메시지를 그대로 던진다.
+ * 학생 계정 관리는 서버 없이 이 브라우저에서 바로 처리한다.
+ * Gemini(초안 생성)·YouTube(영상 검색)는 서버의 API 키가 있어야 해서
+ * 이 방식으로는 대신할 수 없다 — 호출하면 안내 메시지를 던진다.
  */
-export async function callApi(path, body, { auth: needAuth = true, method = 'POST' } = {}) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (needAuth) {
-    const user = getAuthInstance().currentUser;
-    if (!user) throw new ApiError('로그인이 필요합니다.', 401);
-    const token = await user.getIdToken();
-    headers.Authorization = `Bearer ${token}`;
+export async function callApi(path, body) {
+  if (path === '/api/admin/students') {
+    return localAdminStudents(body || {});
   }
-
-  let resp;
-  try {
-    resp = await fetch(path, {
-      method,
-      headers,
-      body: method === 'GET' ? undefined : JSON.stringify(body || {})
-    });
-  } catch (e) {
-    console.error('[api] 네트워크 오류', path, e);
-    throw new ApiError('네트워크 연결을 확인해 주세요.', 0);
-  }
-
-  let payload = null;
-  try { payload = await resp.json(); } catch { /* 본문 없음 */ }
-
-  if (!resp.ok || !payload?.ok) {
-    const msg = payload?.error || '요청을 처리하지 못했습니다.';
-    console.error('[api] 실패', path, resp.status, msg);
-    throw new ApiError(msg, resp.status);
-  }
-  return payload;
+  throw new ApiError('이 기능은 지금 사용할 수 없습니다. (서버 연결 없이 브라우저에만 저장하는 모드)', 501);
 }

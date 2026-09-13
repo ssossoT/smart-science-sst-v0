@@ -187,8 +187,8 @@ export async function renderSettings(ctx) {
     el('div', { class: 'card' }, [
       el('div', { class: 'card-head' }, [el('h2', { text: '외부 연동' })]),
       el('div', { class: 'card-body' }, [
-        el('div', { class: 'notice mb-12' },
-          'API KEY 는 이 화면에 저장하지 않습니다. Vercel 프로젝트의 Environment Variables 에만 등록합니다.'),
+        el('div', { class: 'notice warn mb-12' },
+          '지금은 서버 없이 이 브라우저에만 저장하는 방식이라, Gemini·YouTube 연동 기능은 사용할 수 없습니다. (버튼을 누르면 안내 메시지가 뜹니다.)'),
         el('div', { class: 'form-grid cols-2' }, [
           el('div', {}, [
             el('div', { class: 'flex items-center gap-8 mb-8' }, [
@@ -221,17 +221,10 @@ export async function renderSettings(ctx) {
     ]),
 
     el('div', { class: 'card' }, [
-      el('div', { class: 'card-head' }, [el('h2', { text: '관리자 계정' })]),
+      el('div', { class: 'card-head' }, [el('h2', { text: '선생님 계정' })]),
       el('div', { class: 'card-body' }, [
-        el('div', { class: 'notice' }, [
-          '관리자는 Firebase Console 에서만 추가할 수 있습니다. ',
-          el('code', { text: 'admins/{uid}' }),
-          ' 문서를 만들면 그 Google 계정으로 이 화면에 접근할 수 있습니다.'
-        ]),
-        el('div', { class: 'mt-12 small' }, [
-          el('span', { class: 'muted', text: '현재 로그인 계정 UID  ' }),
-          el('code', { text: store.user?.uid || '' })
-        ])
+        el('div', { class: 'notice' },
+          '선생님 로그인은 이름 + 비밀번호 하나뿐입니다 (계정을 추가로 만들 수 없습니다). 학생 계정은 "학생 관리" 화면에서 추가·관리합니다.')
       ])
     ]),
 

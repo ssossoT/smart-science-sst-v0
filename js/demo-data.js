@@ -1,23 +1,24 @@
 /* ==========================================================================
-   데모용 샘플 데이터 (교사 화면 · 학생 화면 공용)
+   초기 샘플 데이터 (교사 화면 · 학생 화면 공용)
    --------------------------------------------------------------------------
-   지금은 로그인이 실제 Firebase 계정이 아니라 정해진 이름+비밀번호로만
-   동작하는 데모 단계다. teacher.js / student.js 가 이 파일의 데이터를
-   그대로 화면에 채워 넣는다. Firebase를 전혀 불러오지 않으므로
-   네트워크 없이도 로그인·미리보기가 항상 동작한다.
+   실제 서버(Firebase) 없이 이 브라우저에만 데이터를 저장하는 버전이다.
+   여기 있는 값은 처음 접속했을 때 한 번만 채워지는 "초기값"이고,
+   이후 교사 화면에서 저장·수정한 내용은 firebase-service.js 가 관리하는
+   localStorage 저장소에 실제로 남는다 (js/firebase-service.js 참고).
 
-   필드 이름은 firebase-service.js 의 실제 문서 구조(DEFAULT_SETTINGS,
-   sessions, students, inventory)와 최대한 맞춰 뒀다. 다르면 화면에 값이
-   비어 보인다.
+   필드 이름은 실제 문서 구조(DEFAULT_SETTINGS, sessions, students, inventory)와
+   맞춰 뒀다. 다르면 화면에 값이 비어 보인다.
    ========================================================================== */
 
 const YEAR = new Date().getFullYear();
 
-/* ── 로그인 계정 ─────────────────────────────────────────────────────── */
+/* ── 교사 로그인 계정 (고정 1개) ─────────────────────────────────────── */
 
-export const DEMO_TEACHER = { name: '성소연', password: '0000' };
+export const TEACHER_ACCOUNT = { name: '성소연', password: '0000' };
 
-export const DEMO_STUDENTS = [
+/* ── 학생 초기 계정 ──────────────────────────────────────────────────── */
+
+export const INITIAL_STUDENTS = [
   { uid: 's1', displayName: '홍길동', loginName: 'gildong',  studentNo: '10315', status: 'active', password: '0000', year: YEAR, createdAt: new Date().toISOString() },
   { uid: 's2', displayName: '김철수', loginName: 'chulsoo',  studentNo: '20107', status: 'active', password: '0000', year: YEAR, createdAt: new Date().toISOString() },
   { uid: 's3', displayName: '이영희', loginName: 'younghee', studentNo: '10222', status: 'active', password: '0000', year: YEAR, createdAt: new Date().toISOString() }
@@ -25,10 +26,10 @@ export const DEMO_STUDENTS = [
 
 /* ── 운영 설정 ───────────────────────────────────────────────────────── */
 
-export const DEMO_SETTINGS = {
+export const INITIAL_SETTINGS = {
   siteName: '스마트과학반 LAB',
   schoolName: '○○중학교',
-  teacherName: DEMO_TEACHER.name,
+  teacherName: TEACHER_ACCOUNT.name,
   year: YEAR,
   periodStart: `${YEAR}-09-02`,
   periodEnd: `${YEAR}-11-11`,
@@ -41,10 +42,9 @@ export const DEMO_SETTINGS = {
 
 /* ── 수업(세션) ──────────────────────────────────────────────────────── */
 /* 학생 화면에서 바로 보여줄 수 있도록 studentGuide/publicMaterials 등
-   공개용 필드까지 함께 채워 둔다. 실제 서비스에서는 이 필드들이
-   보안 규칙상 별도 공개 문서로 나뉘어 있다. */
+   공개용 필드까지 함께 채워 둔다. */
 
-export const DEMO_SESSIONS = [
+export const INITIAL_SESSIONS = [
   {
     id: 'demo-01', year: YEAR, date: `${YEAR}-09-02`, periodLabel: '1~2차시',
     title: 'OT + 그래비트랙스 ①', field: '물리', status: 'done', isPublic: true, order: 10,
@@ -86,7 +86,7 @@ export const DEMO_SESSIONS = [
 
 /* ── 교사 전용 필드 (준비물 원가, 진행 메모 등) ─────────────────────── */
 
-export const DEMO_PRIVATES = new Map(DEMO_SESSIONS.map(s => [s.id, {
+export const INITIAL_PRIVATES = new Map(INITIAL_SESSIONS.map(s => [s.id, {
   goal: '', plan: '', runPlan: '', checklist: [], liveNotes: [], attendance: {},
   safety: '', planB: '', result: '', goodPoints: '', badPoints: '',
   nextTime: '', usage: '', estimatedCost: 8000, actualCost: 0,
@@ -99,7 +99,7 @@ export const DEMO_PRIVATES = new Map(DEMO_SESSIONS.map(s => [s.id, {
 
 /* ── 재고 ────────────────────────────────────────────────────────────── */
 
-export const DEMO_INVENTORY = [
+export const INITIAL_INVENTORY = [
   { id: 'inv-01', name: '페트병 (1L)', category: '소모품', quantity: 20, minQuantity: 10, unit: '개', location: '과학실 선반 A', expiry: '', memo: '' },
   { id: 'inv-02', name: '과산화수소수 (30%)', category: '시약', quantity: 2, minQuantity: 3, unit: '병', location: '약품 보관함', expiry: '', memo: '' },
   { id: 'inv-03', name: '드라이이스트', category: '식재료', quantity: 5, minQuantity: 2, unit: '봉', location: '냉장고', expiry: '', memo: '' }

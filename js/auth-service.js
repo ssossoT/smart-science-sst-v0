@@ -1,16 +1,12 @@
 /* ==========================================================================
    인증 계층
    --------------------------------------------------------------------------
-   선생님 : (데모용) 로그인 없이 바로 미리보기 화면으로 진입한다. teacher.js 참고.
-   학생   : 이름(로그인 이름) + 비밀번호
-            서버(/api/auth/resolve-student-login)에서 내부 인증 이메일만 받아
-            Firebase Email/Password 로그인을 수행한다.
-            비밀번호는 브라우저 → Firebase 로만 전달되며 서버를 거치지 않는다.
+   teacher.js / student.js 는 더 이상 이 파일을 쓰지 않는다. 둘 다 이름+
+   비밀번호를 firebase-service.js(로컬 저장소)에 직접 대조해서 로그인한다.
 
-   ▶ 향후 학생 Google 로그인 전환을 위해 함수를 분리해 두었다.
-     loginStudentWithPassword() / loginStudentWithGoogle() / linkStudentGoogleAccount()
-     Google 계정을 연결해도 Firebase UID 가 그대로 유지되므로
-     기존 활동 기록(reflections)은 손실 없이 이어진다.
+   이 파일은 portfolio.html 이 아직 가져다 쓰는 watchAuth/renderSetupNotice
+   같은 공용 도우미만 유지하기 위해 남아 있다. 아래 학생 Google 로그인
+   관련 함수들은 실제로 호출되는 곳이 없는 예전 코드다.
    ========================================================================== */
 
 import {

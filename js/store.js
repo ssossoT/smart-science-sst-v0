@@ -6,8 +6,7 @@
 import {
   loadSettings, listSessions, listAllPrivate, listStudents,
   listAllReflections, listInventory, listTemplates,
-  getSessionPrivate, saveSessionPrivate, saveSessionPublic,
-  getDb, doc, setDoc
+  getSessionPrivate, saveSessionPrivate, saveSessionPublic
 } from './firebase-service.js';
 
 export const store = {
@@ -162,39 +161,8 @@ export async function refreshTemplates() {
 }
 
 /**
- * 첫 화면(로그인 전)에서 읽는 공개 안내 문서를 갱신한다.
- * 사이트명·학교명·운영기간·다음 일정만 담는다. 예산 등 운영 정보는 넣지 않는다.
+ * 첫 화면(index.html)은 이제 이 브라우저의 같은 저장소를 직접 읽으므로
+ * 별도로 "공개용" 문서를 복사해 둘 필요가 없다. 예전 호출부가 남아 있어
+ * 함수는 그대로 두되 아무 일도 하지 않는다.
  */
-let lastPublicPayload = '';
-
-export async function syncPublicSettings(nextSession) {
-  const s = store.settings || {};
-  const payload = {
-    siteName: s.siteName || '',
-    schoolName: s.schoolName || '',
-    teacherName: s.teacherName || '',
-    year: s.year || null,
-    periodStart: s.periodStart || '',
-    periodEnd: s.periodEnd || '',
-    intro: s.intro || '',
-    nextSession: nextSession
-      ? { date: nextSession.date || '', periodLabel: nextSession.periodLabel || '' }
-      : null
-  };
-
-  // 내용이 바뀌지 않았으면 쓰지 않는다 (화면을 열 때마다 쓰기가 발생하지 않도록)
-  const signature = JSON.stringify(payload);
-  if (signature === lastPublicPayload) return;
-  lastPublicPayload = signature;
-
-  try {
-    await setDoc(
-      doc(getDb(), 'settings', 'public'),
-      { ...payload, updatedAt: new Date().toISOString() },
-      { merge: true }
-    );
-  } catch (e) {
-    console.warn('[store] 공개 안내 갱신 실패', e);
-    lastPublicPayload = '';
-  }
-}
+export async function syncPublicSettings() {}

@@ -5,8 +5,8 @@
    ========================================================================== */
 
 import {
-  getDb, doc, getDoc, setDoc, writeBatch,
-  DEFAULT_REPORT_QUESTIONS, DEFAULT_SETTINGS
+  getSession, saveSessionPublic,
+  DEFAULT_REPORT_QUESTIONS
 } from './firebase-service.js';
 
 export const SEED_YEAR = 2026;
@@ -63,38 +63,24 @@ function buildSessionDoc(item, index) {
 }
 
 /**
- * 초기 일정 등록.
+ * 초기 일정 등록. 이미 있는 일정(id)은 건드리지 않는다.
  * @returns {Promise<{created:number, skipped:number}>}
  */
 export async function seedSchedule() {
-  const db = getDb();
   let created = 0, skipped = 0;
 
-  // 기존 문서 확인 (중복 생성 방지)
-  const checks = await Promise.all(
-    SEED_SESSIONS.map(async (item) => {
-      const id = seedSessionId(item.key);
-      const snap = await getDoc(doc(db, 'sessions', id));
-      return { id, item, exists: snap.exists() };
-    })
-  );
-
-  const batch = writeBatch(db);
-  checks.forEach(({ id, item, exists }, index) => {
-    if (exists) { skipped += 1; return; }
-    batch.set(doc(db, 'sessions', id), buildSessionDoc(item, index));
+  for (const [index, item] of SEED_SESSIONS.entries()) {
+    const id = seedSessionId(item.key);
+    const exists = await getSession(id);
+    if (exists) { skipped += 1; continue; }
+    await saveSessionPublic(id, buildSessionDoc(item, index));
     created += 1;
-  });
+  }
 
-  if (created > 0) await batch.commit();
   return { created, skipped };
 }
 
-/** settings/site 문서가 없으면 기본값으로 만든다. */
+/** 이 브라우저 저장 방식에서는 접속하는 순간 기본 설정이 이미 채워져 있다. */
 export async function seedSettingsIfMissing() {
-  const ref = doc(getDb(), 'settings', 'site');
-  const snap = await getDoc(ref);
-  if (snap.exists()) return false;
-  await setDoc(ref, { ...DEFAULT_SETTINGS });
-  return true;
+  return false;
 }

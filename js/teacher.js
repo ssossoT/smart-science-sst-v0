@@ -8,9 +8,7 @@ import {
   $, el, mount, clear, emptyState, skeleton,
   confirmLeaveIfDirty, clearDirty
 } from './ui.js';
-import {
-  DEMO_TEACHER, DEMO_SETTINGS, DEMO_SESSIONS, DEMO_PRIVATES, DEMO_STUDENTS, DEMO_INVENTORY
-} from './demo-data.js';
+import { TEACHER_ACCOUNT } from './demo-data.js';
 
 import { renderHome } from './views/home.js';
 import { renderPlan } from './views/plan.js';
@@ -178,8 +176,9 @@ $('#menu-toggle')?.addEventListener('click', () => {
 });
 
 /* ── 인증 흐름 ───────────────────────────────────────────────────────── */
-/* 데모용 화면이므로 실제 Firebase 계정이 아니라 정해진 이름+비밀번호로만
-   들어갈 수 있다. (예전 Google 로그인 · 관리자 확인 흐름은 제거했다.) */
+/* 계정은 성소연/0000 하나뿐이다. Google 로그인 없이 이름+비밀번호만
+   맞으면 들어갈 수 있고, 이후 저장·수정한 내용은 이 브라우저에 실제로
+   남는다 (js/firebase-service.js 참고). */
 
 const loginForm = $('#login-form');
 const loginError = $('#login-error');
@@ -189,16 +188,16 @@ function showLoginError(message) {
   loginError.hidden = !message;
 }
 
-loginForm?.addEventListener('submit', (e) => {
+loginForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   showLoginError('');
   const name = $('#login-name').value.trim();
   const pw = $('#login-pw').value;
 
-  if (name === DEMO_TEACHER.name && pw === DEMO_TEACHER.password) {
+  if (name === TEACHER_ACCOUNT.name && pw === TEACHER_ACCOUNT.password) {
     $('#login-pw').value = '';
     loginForm.reset();
-    enterDemoMode();
+    await enterApp();
   } else {
     showLoginError('이름 또는 비밀번호를 확인해 주세요.');
     $('#login-pw').value = '';
@@ -208,7 +207,6 @@ loginForm?.addEventListener('submit', (e) => {
 $('#logout-btn')?.addEventListener('click', async () => {
   if (!(await confirmLeaveIfDirty())) return;
   clearDirty();
-  document.getElementById('demo-banner')?.remove();
   showOnly(loginScreen);
   location.hash = '';
   setTimeout(() => $('#login-name')?.focus(), 60);
@@ -226,43 +224,21 @@ function fillTopbar(user, settings) {
   }
 }
 
-/* ── 데모 모드 ───────────────────────────────────────────────────────── */
-/* 이름+비밀번호(성소연/0000)로 로그인하면 js/demo-data.js 의 샘플 데이터로
-   교사 화면을 미리 볼 수 있다. 실제 Firebase 계정이 아니므로 저장·수정은
-   이 브라우저 화면에만 반영되고 새로고침하면 사라진다. */
+/* ── 앱 진입 ─────────────────────────────────────────────────────────── */
+/* 이름+비밀번호(성소연/0000)만 확인하고, 실제 데이터는 store.js 를 통해
+   이 브라우저에 저장된 값을 그대로 불러온다. 새로고침해도 유지된다. */
 
-const DEMO_USER = {
-  displayName: DEMO_TEACHER.name,
-  email: '',
-  uid: 'demo-teacher',
-  photoURL: null
-};
+const TEACHER_USER = { displayName: TEACHER_ACCOUNT.name, email: '', uid: 'teacher', photoURL: null };
 
-function enterDemoMode() {
-  // store에 데모 데이터 주입
-  store.user = DEMO_USER;
-  store.settings = { ...DEMO_SETTINGS };
-  store.sessions = DEMO_SESSIONS.map(s => ({ ...s }));
-  store.privates = new Map([...DEMO_PRIVATES].map(([id, p]) => [id, { ...p, materials: p.materials.map(m => ({ ...m })) }]));
-  store.students = DEMO_STUDENTS.map(s => ({ ...s }));
-  store.reflections = [
-    { id: 'demo-01_s1', sessionId: 'demo-01', studentUid: 's1', rating: 5, answers: [], updatedAt: new Date().toISOString() },
-    { id: 'demo-01_s2', sessionId: 'demo-01', studentUid: 's2', rating: 4, answers: [], updatedAt: new Date().toISOString() }
-  ];
-  store.inventory = DEMO_INVENTORY.map(i => ({ ...i }));
-  store.templates = [];
-  store.loaded = true;
-
-  // 데모 배너 표시 (중복 방지)
-  document.getElementById('demo-banner')?.remove();
-  const banner = el('div', {
-    id: 'demo-banner',
-    style: 'background:#f59e0b;color:#1c1c1c;text-align:center;padding:6px 12px;font-size:13px;font-weight:600;letter-spacing:.02em;'
-  }, ['🔒 데모 미리보기 모드 — 저장·수정 기능은 비활성화됩니다.']);
-  document.body.prepend(banner);
-
+async function enterApp() {
+  store.user = TEACHER_USER;
+  try {
+    await loadAll({ force: true });
+  } catch (e) {
+    console.error('[boot] 데이터 적재 실패', e);
+  }
   applyBranding(store.settings, { suffix: '선생님용' });
-  fillTopbar(DEMO_USER, store.settings);
+  fillTopbar(TEACHER_USER, store.settings);
   showOnly(appEl);
   if (!location.hash) location.hash = '#/home';
   renderRoute();

@@ -82,7 +82,7 @@
 </div>
 
 <script type="module">
-import { firebaseReady, initFirebase, getDb, doc, getDoc, DEFAULT_SETTINGS } from './js/firebase-service.js';
+import { loadSettings, listPublicSessions, DEFAULT_SETTINGS } from './js/firebase-service.js';
 import { applyBranding, studentFooterHtml } from './js/common.js';
 import { fmtDate, relativeDay, esc } from './js/ui.js';
 
@@ -116,22 +116,18 @@ function render(settings, nextSession) {
 }
 
 async function boot() {
-  // 첫 화면은 로그인 없이 열리므로 settings/public 문서만 읽는다.
-  let settings = { ...DEFAULT_SETTINGS };
+  // 첫 화면은 로그인 없이 열리므로, 이 브라우저에 저장된 운영 정보만 읽는다.
+  const settings = await loadSettings();
   let next = null;
-
-  if (firebaseReady()) {
-    try {
-      initFirebase();
-      const snap = await getDoc(doc(getDb(), 'settings', 'public'));
-      if (snap.exists()) {
-        const data = snap.data();
-        settings = { ...settings, ...data };
-        next = data.nextSession || null;
-      }
-    } catch (e) {
-      console.warn('[landing] 안내 정보를 불러오지 못했습니다.', e);
-    }
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sessions = await listPublicSessions(settings.year);
+    next = sessions
+      .filter(s => !s.noClass && s.date && new Date(`${s.date}T00:00:00`) >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+  } catch (e) {
+    console.warn('[landing] 안내 정보를 불러오지 못했습니다.', e);
   }
   render(settings, next);
 }

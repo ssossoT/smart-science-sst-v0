@@ -6,8 +6,10 @@
    (보안 규칙에서 Firestore 문서 자체를 읽을 수 없게 막혀 있다.)
    ========================================================================== */
 
-import { DEFAULT_REPORT_QUESTIONS } from './firebase-service.js';
-import { DEMO_STUDENTS, DEMO_SESSIONS, DEMO_SETTINGS } from './demo-data.js';
+import {
+  DEFAULT_REPORT_QUESTIONS, DEFAULT_SETTINGS, checkStudentLogin,
+  loadSettings, listPublicSessions, listMyReflections, saveReflection
+} from './firebase-service.js';
 import { applyBranding, sessionTitle, pickCurrentSession } from './common.js';
 import {
   $, el, mount, clear, toastOk, toastError, emptyState, fmtDate,
@@ -57,23 +59,28 @@ function showLoginError(message) {
   loginError.hidden = !message;
 }
 
-loginForm?.addEventListener('submit', (e) => {
+loginForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   showLoginError('');
   const name = $('#login-name').value.trim();
   const pw = $('#login-pw').value;
   if (!name || !pw) { showLoginError('이름과 비밀번호를 모두 입력해 주세요.'); return; }
 
-  const student = DEMO_STUDENTS.find(s => s.displayName === name);
-  if (!student || student.password !== pw || student.status === 'inactive') {
-    showLoginError('이름 또는 비밀번호를 확인해 주세요.');
+  const btn = $('#login-submit');
+  const restore = busy(btn, '로그인 중');
+  try {
+    const student = await checkStudentLogin(name, pw);
+    if (!student) {
+      showLoginError('이름 또는 비밀번호를 확인해 주세요.');
+      $('#login-pw').value = '';
+      return;
+    }
     $('#login-pw').value = '';
-    return;
+    loginForm.reset();
+    await enterApp(student);
+  } finally {
+    restore();
   }
-
-  $('#login-pw').value = '';
-  loginForm.reset();
-  enterDemo(student);
 });
 
 $('#logout-btn')?.addEventListener('click', async () => {
@@ -91,7 +98,6 @@ function doLogout() {
   clear(viewEl);
   clear(navEl);
   $('#me-name').textContent = '';
-  document.getElementById('demo-banner')?.remove();
   showOnly(loginScreen);
   setTimeout(() => $('#login-name')?.focus(), 60);
 }
@@ -141,7 +147,7 @@ function renderView() {
     case 'mine':      mount(inner, mineView()); break;
   }
 
-  const s2 = state.settings || DEMO_SETTINGS;
+  const s2 = state.settings || DEFAULT_SETTINGS;
   mount(viewEl, inner, el('footer', {
     class: 'site-footer', style: { background: 'transparent', border: 'none', textAlign: 'center' }
   }, [`© ${s2.year || ''} ${s2.siteName || ''} · ${s2.schoolName || ''}`]));
@@ -214,7 +220,7 @@ function homeView(s) {
 
 function scheduleView() {
   if (!state.sessions.length) return noCurrentSession();
-  return card(`${(state.settings || DEMO_SETTINGS).year || ''} 전체 일정`,
+  return card(`${(state.settings || DEFAULT_SETTINGS).year || ''} 전체 일정`,
     el('div', { class: 's-sched' }, state.sessions.map(s => {
       const diff = daysFromToday(s.date);
       const cls = s.id === state.current?.id ? 'now' : (diff != null && diff < 0 ? 'past' : '');
@@ -399,17 +405,17 @@ function reportView(s) {
   const saveBtn = el('button', { class: 'btn btn-primary btn-lg grow' }, [existing ? '수정 저장' : '제출하기']);
   const statusLabel = el('span', { class: 'small muted', text: existing ? `마지막 저장 ${fmtStamp(existing.updatedAt)}` : '' });
 
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
     const filled = answers.filter(a => a.value.trim()).length;
     if (!filled && !rating) { toastError('내용을 입력해 주세요.'); return; }
 
     const restore = busy(saveBtn, '저장 중');
     try {
-      const saved = saveLocalReflection(state.student.uid, s.id, { answers, rating });
+      const saved = await saveReflection(s.id, state.student.uid, { answers, rating });
       state.myReflections = state.myReflections.filter(r => r.sessionId !== s.id).concat(saved);
       setDirty('report', false);
       statusLabel.textContent = `마지막 저장 ${fmtStamp(saved.updatedAt)}`;
-      toastOk('저장했습니다. (데모: 이 브라우저에만 보관됩니다)');
+      toastOk('저장했습니다.');
     } catch (e) {
       console.error('[student] 보고서 저장 실패', e);
       toastError('저장하지 못했습니다.');
@@ -468,43 +474,24 @@ function mineView() {
   })), el('span', { class: 'badge', text: `${refs.length}건` }));
 }
 
-/* ── 데모 저장소 ─────────────────────────────────────────────────────── */
-/* 이름+비밀번호(0000)로 로그인하는 데모 계정이라 실제 서버 계정이 없다.
-   작성한 간이보고서는 이 브라우저의 localStorage 에만 저장된다. */
-
-const LS_KEY = (uid) => `smartlab-demo:reflections:${uid}`;
-
-function loadLocalReflections(uid) {
-  try { return JSON.parse(localStorage.getItem(LS_KEY(uid)) || '[]'); }
-  catch { return []; }
-}
-
-function saveLocalReflection(uid, sessionId, data) {
-  const list = loadLocalReflections(uid).filter(r => r.sessionId !== sessionId);
-  const saved = { id: `${sessionId}_${uid}`, sessionId, studentUid: uid, ...data, updatedAt: new Date().toISOString() };
-  list.push(saved);
-  try { localStorage.setItem(LS_KEY(uid), JSON.stringify(list)); } catch { /* 저장소 접근 불가 환경 */ }
-  return saved;
-}
-
 /* ── 적재 ────────────────────────────────────────────────────────────── */
+/* 실제 데이터는 firebase-service.js 를 통해 이 브라우저에 저장된 값을
+   그대로 불러온다. 선생님 화면에서 저장한 내용이 여기에도 그대로
+   보이고, 새로고침해도 유지된다. */
 
-function enterDemo(student) {
+async function enterApp(student) {
   state.student = student;
-  state.settings = { ...DEMO_SETTINGS };
+  state.settings = await loadSettings();
   applyBranding(state.settings, { suffix: '학생용' });
   $('#me-name').textContent = student.displayName || '';
 
-  state.sessions = DEMO_SESSIONS.map(s => ({ ...s }));
-  state.myReflections = loadLocalReflections(student.uid);
-  state.current = pickCurrentSession(state.sessions);
-
-  document.getElementById('demo-banner')?.remove();
-  const banner = el('div', {
-    id: 'demo-banner',
-    style: 'background:#f59e0b;color:#1c1c1c;text-align:center;padding:6px 12px;font-size:13px;font-weight:600;letter-spacing:.02em;'
-  }, ['🔒 데모 미리보기 모드 — 작성한 내용은 이 브라우저에만 저장됩니다.']);
-  document.body.prepend(banner);
+  const [sessions, myReflections] = await Promise.all([
+    listPublicSessions(state.settings.year),
+    listMyReflections(student.uid)
+  ]);
+  state.sessions = sessions;
+  state.myReflections = myReflections;
+  state.current = pickCurrentSession(sessions);
 
   buildNav();
   renderView();
@@ -514,7 +501,7 @@ function enterDemo(student) {
 /* ── 시작 ────────────────────────────────────────────────────────────── */
 
 function boot() {
-  applyBranding(DEMO_SETTINGS, { suffix: '학생용' });
+  applyBranding(DEFAULT_SETTINGS, { suffix: '학생용' });
   showOnly(loginScreen);
   setTimeout(() => $('#login-name')?.focus(), 60);
 }
