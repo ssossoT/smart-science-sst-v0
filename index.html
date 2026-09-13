@@ -13,37 +13,54 @@
 
 <div class="landing">
 
-  <header class="landing-head">
+  <header class="landing-nav">
     <span class="brand">
       <span class="brand-mark" data-brand-mark>SL</span>
       <span data-site-name>스마트과학반 LAB</span>
     </span>
+    <a class="teacher-entry" href="./teacher.html">
+      교사용 로그인 <span aria-hidden="true">→</span>
+    </a>
   </header>
 
-  <main class="landing-main">
+  <main class="landing-hero">
 
-    <div class="landing-title">
-      <h1><span data-site-name>스마트과학반 LAB</span></h1>
-      <p id="intro-text">실험으로 과학을 직접 확인하는 중학교 방과후 활동입니다.</p>
+    <div class="hero-deco hero-deco-1" aria-hidden="true" style="color:var(--accent)">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 12h20"/>
+        <path d="M44 12v22L24 78a8 8 0 0 0 7 12h38a8 8 0 0 0 7-12L56 34V12"/>
+        <path d="M32 66h36"/>
+        <circle cx="49" cy="49" r="2.6" fill="currentColor" stroke="none"/>
+        <circle cx="58" cy="58" r="2" fill="currentColor" stroke="none"/>
+        <circle cx="43" cy="58" r="1.6" fill="currentColor" stroke="none"/>
+      </svg>
     </div>
 
-    <nav class="gate" aria-label="이용자 선택">
-      <a class="gate-card" href="./teacher.html">
-        <span class="k">Teacher</span>
-        <h2>선생님용</h2>
-        <p>수업 계획, 준비물과 구매 관리, 수업 기록, 학생 기록, 포트폴리오</p>
-        <span class="go">들어가기 →</span>
-      </a>
+    <div class="hero-deco hero-deco-2" aria-hidden="true" style="color:#e08a45">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round">
+        <ellipse cx="50" cy="50" rx="42" ry="16"/>
+        <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(60 50 50)"/>
+        <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(120 50 50)"/>
+        <circle cx="50" cy="50" r="6" fill="currentColor" stroke="none"/>
+      </svg>
+    </div>
 
-      <a class="gate-card" href="./student.html">
-        <span class="k">Student</span>
-        <h2>학생용</h2>
-        <p>일정 확인, 오늘의 활동, 활동자료와 사진, 활동 결과, 간이보고서</p>
-        <span class="go">들어가기 →</span>
-      </a>
-    </nav>
+    <div class="hero-deco hero-deco-3" aria-hidden="true" style="color:var(--accent)">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M50 14 L58 42 L86 50 L58 58 L50 86 L42 58 L14 50 L42 42 Z"/>
+      </svg>
+    </div>
 
-    <section class="landing-info" aria-label="운영 안내">
+    <p class="hero-eyebrow">🔬 방과후 과학 실험실</p>
+
+    <h1 class="hero-title" id="intro-text">실험으로 과학을 직접 확인하는 중학교 방과후 활동입니다.</h1>
+
+    <div class="hero-actions">
+      <a class="btn btn-primary btn-lg" href="./student.html">학생 화면 열기 <span aria-hidden="true">→</span></a>
+      <a class="btn btn-lg btn-outline" href="#info">운영 안내 보기</a>
+    </div>
+
+    <section class="hero-stats" id="info" aria-label="운영 안내">
       <div class="stat">
         <div class="k">운영 학년도</div>
         <div class="v" id="info-year">—</div>
