@@ -378,6 +378,16 @@
 .lp-footer .lp-brand-mini { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; color: var(--lp-ink); }
 .lp-footer .grow { flex: 1; }
 .lp-footer nav { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.lp-footer-legal {
+  background: var(--lp-soft, #f4f6fb);
+  flex-direction: column; align-items: flex-start;
+  padding: 16px 24px 22px;
+  gap: 6px;
+}
+.lp-footer-legal nav { gap: 8px; align-items: center; }
+.lp-footer-legal nav a { color: var(--lp-muted); text-decoration: underline; }
+.lp-footer-legal p { margin: 0; }
 .lp-back-top {
   width: 30px; height: 30px; flex: none;
   border-radius: 50%; background: var(--lp-ink); color: #fff;

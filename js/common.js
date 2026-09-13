@@ -18,11 +18,22 @@ export function teacherFooterHtml(s = cachedSettings()) {
     <p>제작자의 동의 없는 무단 복제·배포·수정·상업적 이용을 금합니다.</p>
     <p>활동 및 실험을 재현할 경우 안전수칙과 학교 여건을 충분히 확인해 주세요.</p>
     <p style="margin-top:8px">제작자 <strong>${school} 교사 ${teacher}</strong></p>
+    ${legalLine()}
     <p>© ${year} ${school} 교사 ${teacher}. All rights reserved.</p>`;
 }
 
 export function studentFooterHtml(s = cachedSettings()) {
-  return `<p>© ${esc(s.year || new Date().getFullYear())} ${esc(s.siteName || '스마트과학반')} · ${esc(s.schoolName || '')}</p>`;
+  return `
+    ${legalLine()}
+    <p>© ${esc(s.year || new Date().getFullYear())} ${esc(s.siteName || '스마트과학반')} · ${esc(s.schoolName || '')}</p>`;
+}
+
+/** 교사·학생 화면 공통: 약관/방침 링크 + 이메일 수집거부 안내 + 문의처 */
+function legalLine() {
+  return `
+    <p><a href="./terms.html">서비스 이용약관</a> · <a href="./privacy.html">개인정보처리방침</a></p>
+    <p>본 사이트는 게시된 이메일 주소가 전자우편 수집 프로그램 등 기술적 장치로 무단 수집되는 것을 거부하며, 이를 위반 시 정보통신망법에 의해 처벌될 수 있습니다.</p>
+    <p>문의: sys181417@gmail.com</p>`;
 }
 
 export function renderFooter(node, kind) {
