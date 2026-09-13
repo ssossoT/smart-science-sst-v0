@@ -6,17 +6,11 @@
    (보안 규칙에서 Firestore 문서 자체를 읽을 수 없게 막혀 있다.)
    ========================================================================== */
 
-import {
-  firebaseReady, initFirebase, loadSettings, cachedSettings, DEFAULT_SETTINGS,
-  listPublicSessions, getStudentDoc, saveReflection, listMyReflections,
-  isAdminUid, DEFAULT_REPORT_QUESTIONS
-} from './firebase-service.js';
-import {
-  loginStudentWithPassword, logout, watchAuth, applyAutoLogout, renderSetupNotice
-} from './auth-service.js';
+import { DEFAULT_REPORT_QUESTIONS } from './firebase-service.js';
+import { DEMO_STUDENTS, DEMO_SESSIONS, DEMO_SETTINGS } from './demo-data.js';
 import { applyBranding, sessionTitle, pickCurrentSession } from './common.js';
 import {
-  $, el, mount, clear, toast, toastOk, toastError, emptyState, fmtDate,
+  $, el, mount, clear, toastOk, toastError, emptyState, fmtDate,
   relativeDay, starsStatic, busy, fmtStamp, setDirty, confirmLeaveIfDirty,
   daysFromToday
 } from './ui.js';
@@ -24,8 +18,8 @@ import {
 /* ── 상태 ────────────────────────────────────────────────────────────── */
 
 const state = {
-  user: null,
   student: null,
+  settings: null,
   sessions: [],
   myReflections: [],
   current: null,
@@ -63,66 +57,43 @@ function showLoginError(message) {
   loginError.hidden = !message;
 }
 
-loginForm?.addEventListener('submit', async (e) => {
+loginForm?.addEventListener('submit', (e) => {
   e.preventDefault();
   showLoginError('');
   const name = $('#login-name').value.trim();
   const pw = $('#login-pw').value;
   if (!name || !pw) { showLoginError('이름과 비밀번호를 모두 입력해 주세요.'); return; }
 
-  const btn = $('#login-submit');
-  const restore = busy(btn, '로그인 중');
-  try {
-    await loginStudentWithPassword(name, pw);
-    // 비밀번호는 어디에도 남기지 않는다.
+  const student = DEMO_STUDENTS.find(s => s.displayName === name);
+  if (!student || student.password !== pw || student.status === 'inactive') {
+    showLoginError('이름 또는 비밀번호를 확인해 주세요.');
     $('#login-pw').value = '';
-    loginForm.reset();
-  } catch (err) {
-    console.warn('[student] 로그인 실패', err?.message);
-    showLoginError(err?.message || '이름 또는 비밀번호를 확인해 주세요.');
-    $('#login-pw').value = '';
-  } finally {
-    restore();
+    return;
   }
+
+  $('#login-pw').value = '';
+  loginForm.reset();
+  enterDemo(student);
 });
 
 $('#logout-btn')?.addEventListener('click', async () => {
   if (!(await confirmLeaveIfDirty())) return;
-  await doLogout();
+  doLogout();
 });
 
-/** 선생님 계정으로 학생 화면에 들어온 경우의 안내 (로그아웃시키지 않는다) */
-function showTeacherNotice() {
-  const card = loginScreen.querySelector('.auth-card');
-  mount(card,
-    el('h1', { text: '선생님 계정으로 로그인되어 있습니다' }),
-    el('p', {
-      class: 'sub',
-      text: '학생 화면은 학생 계정으로만 볼 수 있습니다. 여기서 로그아웃하면 열어 둔 선생님 화면에서도 로그아웃됩니다.'
-    }),
-    el('div', { class: 'auth-form' }, [
-      el('a', { class: 'btn btn-primary btn-lg btn-block', href: './teacher.html' }, ['선생님 화면으로 돌아가기']),
-      el('button', {
-        class: 'btn btn-block', type: 'button',
-        onclick: async () => { await doLogout(); location.reload(); }
-      }, ['로그아웃하고 학생으로 로그인'])
-    ]),
-    el('a', { class: 'auth-back', href: './index.html' }, ['← 처음 화면으로'])
-  );
-  showOnly(loginScreen);
-}
-
-async function doLogout() {
-  await logout();
+function doLogout() {
   // 화면에서 개인 정보를 즉시 지운다.
-  state.user = null;
   state.student = null;
+  state.settings = null;
   state.sessions = [];
   state.myReflections = [];
+  state.current = null;
   clear(viewEl);
   clear(navEl);
   $('#me-name').textContent = '';
+  document.getElementById('demo-banner')?.remove();
   showOnly(loginScreen);
+  setTimeout(() => $('#login-name')?.focus(), 60);
 }
 
 /* ── 화면 ────────────────────────────────────────────────────────────── */
@@ -170,9 +141,10 @@ function renderView() {
     case 'mine':      mount(inner, mineView()); break;
   }
 
+  const s2 = state.settings || DEMO_SETTINGS;
   mount(viewEl, inner, el('footer', {
     class: 'site-footer', style: { background: 'transparent', border: 'none', textAlign: 'center' }
-  }, [`© ${cachedSettings().year || ''} ${cachedSettings().siteName || ''} · ${cachedSettings().schoolName || ''}`]));
+  }, [`© ${s2.year || ''} ${s2.siteName || ''} · ${s2.schoolName || ''}`]));
   viewEl.scrollTop = 0;
 }
 
@@ -242,7 +214,7 @@ function homeView(s) {
 
 function scheduleView() {
   if (!state.sessions.length) return noCurrentSession();
-  return card(`${cachedSettings().year || ''} 전체 일정`,
+  return card(`${(state.settings || DEMO_SETTINGS).year || ''} 전체 일정`,
     el('div', { class: 's-sched' }, state.sessions.map(s => {
       const diff = daysFromToday(s.date);
       const cls = s.id === state.current?.id ? 'now' : (diff != null && diff < 0 ? 'past' : '');
@@ -427,20 +399,20 @@ function reportView(s) {
   const saveBtn = el('button', { class: 'btn btn-primary btn-lg grow' }, [existing ? '수정 저장' : '제출하기']);
   const statusLabel = el('span', { class: 'small muted', text: existing ? `마지막 저장 ${fmtStamp(existing.updatedAt)}` : '' });
 
-  saveBtn.addEventListener('click', async () => {
+  saveBtn.addEventListener('click', () => {
     const filled = answers.filter(a => a.value.trim()).length;
     if (!filled && !rating) { toastError('내용을 입력해 주세요.'); return; }
 
     const restore = busy(saveBtn, '저장 중');
     try {
-      const saved = await saveReflection(s.id, state.user.uid, { answers, rating });
+      const saved = saveLocalReflection(state.student.uid, s.id, { answers, rating });
       state.myReflections = state.myReflections.filter(r => r.sessionId !== s.id).concat(saved);
       setDirty('report', false);
       statusLabel.textContent = `마지막 저장 ${fmtStamp(saved.updatedAt)}`;
-      toastOk('저장했습니다.');
+      toastOk('저장했습니다. (데모: 이 브라우저에만 보관됩니다)');
     } catch (e) {
       console.error('[student] 보고서 저장 실패', e);
-      toastError('저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      toastError('저장하지 못했습니다.');
     } finally { restore(); }
   });
 
@@ -496,81 +468,55 @@ function mineView() {
   })), el('span', { class: 'badge', text: `${refs.length}건` }));
 }
 
+/* ── 데모 저장소 ─────────────────────────────────────────────────────── */
+/* 이름+비밀번호(0000)로 로그인하는 데모 계정이라 실제 서버 계정이 없다.
+   작성한 간이보고서는 이 브라우저의 localStorage 에만 저장된다. */
+
+const LS_KEY = (uid) => `smartlab-demo:reflections:${uid}`;
+
+function loadLocalReflections(uid) {
+  try { return JSON.parse(localStorage.getItem(LS_KEY(uid)) || '[]'); }
+  catch { return []; }
+}
+
+function saveLocalReflection(uid, sessionId, data) {
+  const list = loadLocalReflections(uid).filter(r => r.sessionId !== sessionId);
+  const saved = { id: `${sessionId}_${uid}`, sessionId, studentUid: uid, ...data, updatedAt: new Date().toISOString() };
+  list.push(saved);
+  try { localStorage.setItem(LS_KEY(uid), JSON.stringify(list)); } catch { /* 저장소 접근 불가 환경 */ }
+  return saved;
+}
+
 /* ── 적재 ────────────────────────────────────────────────────────────── */
 
-async function loadStudentData(user) {
-  const settings = await loadSettings({ force: true });
-  applyBranding(settings, { suffix: '학생용' });
-
-  const student = await getStudentDoc(user.uid);
-  if (!student) {
-    // 선생님이 [학생 화면 열기] 로 들어온 경우.
-    // 여기서 로그아웃시키면 열어 둔 선생님 화면까지 함께 로그아웃되므로 그대로 둔다.
-    if (await isAdminUid(user.uid)) {
-      showTeacherNotice();
-      return;
-    }
-    await logout();
-    showOnly(loginScreen);
-    showLoginError('등록되지 않은 계정입니다. 담당 선생님께 문의해 주세요.');
-    return;
-  }
-  if (student.status === 'inactive') {
-    await logout();
-    showOnly(loginScreen);
-    showLoginError('현재 사용할 수 없는 계정입니다. 담당 선생님께 문의해 주세요.');
-    return;
-  }
-
-  state.user = user;
+function enterDemo(student) {
   state.student = student;
+  state.settings = { ...DEMO_SETTINGS };
+  applyBranding(state.settings, { suffix: '학생용' });
   $('#me-name').textContent = student.displayName || '';
 
-  const [sessions, myReflections] = await Promise.all([
-    listPublicSessions(settings.year),
-    listMyReflections(user.uid)
-  ]);
-  state.sessions = sessions;
-  state.myReflections = myReflections;
-  state.current = pickCurrentSession(sessions);
+  state.sessions = DEMO_SESSIONS.map(s => ({ ...s }));
+  state.myReflections = loadLocalReflections(student.uid);
+  state.current = pickCurrentSession(state.sessions);
+
+  document.getElementById('demo-banner')?.remove();
+  const banner = el('div', {
+    id: 'demo-banner',
+    style: 'background:#f59e0b;color:#1c1c1c;text-align:center;padding:6px 12px;font-size:13px;font-weight:600;letter-spacing:.02em;'
+  }, ['🔒 데모 미리보기 모드 — 작성한 내용은 이 브라우저에만 저장됩니다.']);
+  document.body.prepend(banner);
 
   buildNav();
   renderView();
   showOnly(appEl);
-
-  // 공용 기기 대비 자동 로그아웃
-  applyAutoLogout(() => {
-    doLogout();
-    toast('일정 시간 사용하지 않아 자동으로 로그아웃되었습니다.', 'warn', 5000);
-  });
 }
 
 /* ── 시작 ────────────────────────────────────────────────────────────── */
 
 function boot() {
-  if (!firebaseReady()) {
-    renderSetupNotice(document.body);
-    return;
-  }
-  initFirebase();
-  applyBranding(DEFAULT_SETTINGS, { suffix: '학생용' });
-
-  watchAuth(async (user) => {
-    if (!user) {
-      showOnly(loginScreen);
-      setTimeout(() => $('#login-name')?.focus(), 60);
-      return;
-    }
-    showOnly(bootScreen);
-    try {
-      await loadStudentData(user);
-    } catch (e) {
-      console.error('[student] 데이터 적재 실패', e);
-      await logout();
-      showOnly(loginScreen);
-      showLoginError('정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
-    }
-  });
+  applyBranding(DEMO_SETTINGS, { suffix: '학생용' });
+  showOnly(loginScreen);
+  setTimeout(() => $('#login-name')?.focus(), 60);
 }
 
 boot();

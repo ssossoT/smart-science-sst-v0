@@ -12,6 +12,38 @@
 </head>
 <body>
 
+<!-- ── 로그인 화면 ─────────────────────────────────────────────────── -->
+<div class="auth-shell" id="login-screen" hidden>
+  <div class="auth-card">
+    <span class="brand" style="margin-bottom:14px">
+      <span class="brand-mark" data-brand-mark>SL</span>
+      <span data-site-name>스마트과학반 LAB</span>
+    </span>
+    <h1>선생님용 로그인</h1>
+    <p class="sub">이름과 비밀번호를 입력해 주세요.</p>
+
+    <form class="auth-form" id="login-form" autocomplete="off">
+      <div class="field">
+        <label for="login-name">이름</label>
+        <input class="input" id="login-name" name="name" type="text"
+               autocomplete="username" required maxlength="40" placeholder="성소연">
+      </div>
+      <div class="field">
+        <label for="login-pw">비밀번호</label>
+        <input class="input" id="login-pw" name="password" type="password"
+               autocomplete="current-password" required maxlength="72">
+      </div>
+      <div class="auth-error" id="login-error" hidden></div>
+      <button class="btn btn-primary btn-lg btn-block" id="login-submit" type="submit">로그인</button>
+    </form>
+
+    <p class="auth-back">
+      데모 계정: 성소연 (비밀번호 0000)
+    </p>
+    <a class="auth-back" href="./index.html">← 처음 화면으로</a>
+  </div>
+</div>
+
 <!-- ── 앱 셸 ───────────────────────────────────────────────────────── -->
 <div class="app" id="app" hidden>
 
@@ -27,7 +59,7 @@
       <span class="avatar" id="top-avatar"></span>
       <span class="truncate" id="top-name"></span>
     </div>
-    <button class="btn btn-sm" id="logout-btn" type="button">새로고침</button>
+    <button class="btn btn-sm" id="logout-btn" type="button">로그아웃</button>
   </header>
 
   <div class="app-body">
