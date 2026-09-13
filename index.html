@@ -142,37 +142,6 @@
         </div>
       </div>
 
-      <div class="lp-tiles">
-        <a class="lp-tile c-mint" href="./student.html#/current">
-          <span class="ico">📖</span>
-          <span><span class="t">오늘의 활동</span><br><span class="s">오늘은 어떤 실험을 할까요?</span></span>
-        </a>
-        <a class="lp-tile c-sky" href="./student.html#/materials">
-          <span class="ico">📁</span>
-          <span><span class="t">활동자료</span><br><span class="s">실험지, 참고자료 모음</span></span>
-        </a>
-        <a class="lp-tile c-purple" href="./student.html#/photos">
-          <span class="ico">🖼️</span>
-          <span><span class="t">활동사진</span><br><span class="s">우리의 생생한 실험 현장!</span></span>
-        </a>
-        <a class="lp-tile c-yellow" href="./student.html#/result">
-          <span class="ico">📊</span>
-          <span><span class="t">활동 결과</span><br><span class="s">실험 결과와 발표 자료</span></span>
-        </a>
-        <a class="lp-tile c-peach" href="./student.html#/report">
-          <span class="ico">✏️</span>
-          <span><span class="t">실험 기록하기</span><br><span class="s">나만의 과학 노트에 기록</span></span>
-        </a>
-        <a class="lp-tile c-sky" href="./student.html#/schedule">
-          <span class="ico">📅</span>
-          <span><span class="t">전체 일정</span><br><span class="s">다가오는 실험 일정</span></span>
-        </a>
-        <a class="lp-tile c-pink" href="./student.html#/mine">
-          <span class="ico">⭐</span>
-          <span><span class="t">내 기록</span><br><span class="s">나의 활동 히스토리</span></span>
-        </a>
-      </div>
-
       <div class="lp-columns-2">
         <div class="lp-panel" id="lp-next-panel" hidden>
           <div class="lp-panel-head">🚀 다음 활동</div>
@@ -186,7 +155,7 @@
 
         <div class="lp-panel">
           <div class="lp-panel-head">
-            <span>🗓️ 이번 주 일정</span>
+            <span>🗓️ 다가오는 일정</span>
             <div class="grow"></div>
             <a class="lp-link" href="./student.html#/schedule">전체 일정 보기 →</a>
           </div>
@@ -362,11 +331,11 @@ async function boot() {
     document.getElementById('next-guide').textContent = next.studentGuide || '';
   }
 
-  // 이번 주 일정 (다가오는 순서로 최대 4개)
+  // 다가오는 일정 (최대 8개)
   const upcoming = sessions
     .filter(s => s.date && new Date(`${s.date}T00:00:00`) >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 4);
+    .slice(0, 8);
   const weekEl = document.getElementById('lp-week');
   if (upcoming.length) {
     weekEl.innerHTML = upcoming.map(s => `
