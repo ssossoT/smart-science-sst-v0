@@ -139,7 +139,7 @@
 
 .now-card {
   border: 1px solid var(--accent-line);
-  background: linear-gradient(180deg, #eef3ff 0%, var(--surface) 58%);
+  background: linear-gradient(180deg, var(--accent-soft) 0%, var(--surface) 58%);
 }
 .now-card .now-title {
   font-size: 22px; font-weight: 800; letter-spacing: -.03em; line-height: 1.25;
@@ -184,7 +184,7 @@
 .plan-row:last-child { border-bottom: none; }
 .plan-row:hover { background: var(--surface-2); }
 .plan-row.on { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
-.plan-row.this-week { background: #eef3ff; }
+.plan-row.this-week { background: var(--accent-soft); }
 .plan-row.this-week.on { background: var(--accent-soft); }
 .plan-row.done .p-title { color: var(--muted); }
 .plan-row.no-class { opacity: .72; }
@@ -320,7 +320,7 @@
 /* ── 미리보기(초안) 패널 ────────────────────────────────────────────── */
 .draft-box {
   border: 1px solid var(--accent-line); border-radius: var(--radius);
-  background: #eef3ff; padding: 12px;
+  background: var(--accent-soft); padding: 12px;
 }
 .draft-box h4 {
   font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 6px;
