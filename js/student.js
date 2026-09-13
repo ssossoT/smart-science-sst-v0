@@ -10,7 +10,7 @@ import {
   DEFAULT_REPORT_QUESTIONS, DEFAULT_SETTINGS, checkStudentLogin, getStudentDoc,
   loadSettings, listPublicSessions, listMyReflections, saveReflection
 } from './firebase-service.js';
-import { applyBranding, sessionTitle, pickCurrentSession } from './common.js';
+import { applyBranding, sessionTitle, pickCurrentSession, fieldEmoji } from './common.js';
 import {
   $, el, mount, clear, toastOk, toastError, emptyState, fmtDate,
   relativeDay, starsStatic, busy, fmtStamp, setDirty, confirmLeaveIfDirty,
@@ -29,14 +29,14 @@ const state = {
 };
 
 const TABS = [
-  ['home',     '홈'],
-  ['schedule', '전체 일정'],
-  ['current',  '이번 활동'],
-  ['materials', '활동자료'],
-  ['photos',   '활동사진'],
-  ['result',   '활동 결과'],
-  ['report',   '간이보고서'],
-  ['mine',     '내 기록']
+  ['home',     '🏠 홈'],
+  ['schedule', '📅 전체 일정'],
+  ['current',  '📖 이번 활동'],
+  ['materials', '📁 활동자료'],
+  ['photos',   '🖼️ 활동사진'],
+  ['result',   '📊 활동 결과'],
+  ['report',   '✏️ 간이보고서'],
+  ['mine',     '⭐ 내 기록']
 ];
 
 const bootScreen = $('#boot-screen');
@@ -163,7 +163,7 @@ function homeView(s) {
       el('div', { class: 'today-meta' }, [
         el('span', { class: 'badge accent', text: fmtDate(s.date, { withYear: true }) }),
         s.periodLabel ? el('span', { class: 'badge', text: s.periodLabel }) : null,
-        s.field ? el('span', { class: 'tag', text: s.field }) : null,
+        s.field ? el('span', { class: 'tag', text: `${fieldEmoji(s.field)} ${s.field}` }) : null,
         el('span', { class: 'muted small', text: relativeDay(s.date) })
       ]),
       s.studentGuide
@@ -211,6 +211,7 @@ function scheduleView() {
       const diff = daysFromToday(s.date);
       const cls = s.id === state.current?.id ? 'now' : (diff != null && diff < 0 ? 'past' : '');
       return el('div', { class: `s-sched-row ${cls}` }, [
+        el('span', { class: 's-field-ico', text: s.noClass ? '💤' : fieldEmoji(s.field) }),
         el('div', { class: 'd' }, [
           el('b', { text: s.date ? `${Number(s.date.slice(5, 7))}/${Number(s.date.slice(8, 10))}` : '—' }),
           el('span', { text: fmtDate(s.date).slice(-3) })
@@ -238,7 +239,7 @@ function currentView(s) {
       el('div', { class: 'today-meta' }, [
         el('span', { class: 'badge accent', text: fmtDate(s.date, { withYear: true }) }),
         s.periodLabel ? el('span', { class: 'badge', text: s.periodLabel }) : null,
-        s.field ? el('span', { class: 'tag', text: s.field }) : null
+        s.field ? el('span', { class: 'tag', text: `${fieldEmoji(s.field)} ${s.field}` }) : null
       ]),
       s.studentGuide
         ? el('div', { class: 'today-guide', text: s.studentGuide })

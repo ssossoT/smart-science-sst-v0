@@ -6,7 +6,7 @@
 <meta name="description" content="중학교 방과후학교 스마트과학반 운영 관리 시스템">
 <meta name="robots" content="noindex">
 <title>스마트과학반 LAB</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e7490'/><text x='16' y='22' font-size='15' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>SL</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%233b6df6'/><text x='16' y='22' font-size='15' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>SL</text></svg>">
 <link rel="stylesheet" href="./css/common.css">
 <link rel="stylesheet" href="./css/landing.css">
 </head>
@@ -211,7 +211,7 @@
 <script type="module">
 import { loadSettings, listPublicSessions, listStudents, checkStudentLogin, DEFAULT_SETTINGS } from './js/firebase-service.js';
 import { TEACHER_ACCOUNT } from './js/demo-data.js';
-import { applyBranding, sessionTitle, pickCurrentSession, nextSessionAfter } from './js/common.js';
+import { applyBranding, sessionTitle, pickCurrentSession, nextSessionAfter, fieldEmoji } from './js/common.js';
 import { fmtDate, relativeDay, esc, el, openModal } from './js/ui.js';
 
 /* ── 로그인 팝업 ─────────────────────────────────────────────────────
@@ -296,17 +296,11 @@ function wireLoginLinks() {
   });
 }
 
-const FIELD_EMOJI = {
-  물리: '⚛️', 화학: '🧪', 생명: '🧬', 지구과학: '🌍',
-  천문: '🔭', 디지털: '💻', 제작: '🛠️', 기타: '🔬'
-};
 const FIELD_PHOTO = {
   물리: ['#8fc6ff', '#3b6df6'], 화학: ['#a8f0c6', '#12b76a'], 생명: ['#c9f2d8', '#2f9e6b'],
   지구과학: ['#bfe3ff', '#1c64c9'], 천문: ['#c8c2ff', '#5b3fd6'], 디지털: ['#ffd08a', '#ff7a59'],
   제작: ['#ffd9a8', '#e08a45'], 기타: ['#d7ecff', '#3b6df6']
 };
-
-function fieldEmoji(f) { return FIELD_EMOJI[f] || '🔬'; }
 
 async function boot() {
   wireLoginLinks();

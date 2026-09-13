@@ -91,11 +91,11 @@
   }
 
   .pf-entry h2 {
-    font-size: 15pt; border-bottom: 1.6pt solid #0e7490;
+    font-size: 15pt; border-bottom: 1.6pt solid #3b6df6;
     padding-bottom: 2mm; margin-bottom: 3mm;
   }
   .pf-entry h3 {
-    font-size: 11pt; color: #0e7490; margin: 4mm 0 1.5mm;
+    font-size: 11pt; color: #3b6df6; margin: 4mm 0 1.5mm;
   }
   .pf-entry .pre-wrap { font-size: 10pt; line-height: 1.7; }
 
