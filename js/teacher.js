@@ -245,6 +245,96 @@ function fillTopbar(user, settings) {
   }
 }
 
+/* ── 데모 모드 ───────────────────────────────────────────────────────── */
+
+// 데모 모드: 로그인 없이 샘플 데이터로 교사 화면 미리보기
+const DEMO_USER = {
+  displayName: '데모 선생님',
+  email: 'demo@example.com',
+  uid: 'demo',
+  photoURL: null
+};
+
+// 데모용 샘플 데이터
+// 필드 이름은 firebase-service.js 의 실제 문서 구조(DEFAULT_SETTINGS, sessions, students, inventory)와
+// 반드시 맞춰야 한다. 다르면 화면에 값이 비어 보인다.
+const DEMO_SETTINGS = {
+  siteName: '스마트과학반 LAB',
+  schoolName: '○○중학교',
+  teacherName: '데모 선생님',
+  year: new Date().getFullYear(),
+  periodStart: `${new Date().getFullYear()}-09-02`,
+  periodEnd: `${new Date().getFullYear()}-11-11`,
+  totalBudget: 1000000,
+  studentLogoutMinutes: 30,
+  geminiEnabled: true,
+  youtubeEnabled: true,
+  intro: '실험으로 과학을 직접 확인하는 중학교 방과후 활동입니다.'
+};
+
+const DEMO_SESSIONS = [
+  { id: 'demo-01', year: new Date().getFullYear(), date: `${new Date().getFullYear()}-09-02`, periodLabel: '1~2차시', title: 'OT + 그래비트랙스 ①', field: '물리', status: 'done', isPublic: true, order: 10 },
+  { id: 'demo-02', year: new Date().getFullYear(), date: `${new Date().getFullYear()}-09-09`, periodLabel: '3~4차시', title: '그래비트랙스 ②', field: '물리', status: 'done', isPublic: true, order: 20 },
+  { id: 'demo-03', year: new Date().getFullYear(), date: `${new Date().getFullYear()}-09-16`, periodLabel: '5~6차시', title: '코끼리 치약', field: '화학', status: 'published', isPublic: true, order: 30 },
+  { id: 'demo-04', year: new Date().getFullYear(), date: `${new Date().getFullYear()}-09-23`, periodLabel: '', title: '창의적체험활동의 날 · 방과후 없음', field: '기타', noClass: true, status: 'draft', isPublic: false, order: 40 },
+  { id: 'demo-05', year: new Date().getFullYear(), date: `${new Date().getFullYear()}-09-30`, periodLabel: '7~8차시', title: '아이스크림 만들기', field: '화학', status: 'draft', isPublic: false, order: 50 },
+];
+
+const DEMO_INVENTORY = [
+  { id: 'inv-01', name: '페트병 (1L)', category: '소모품', quantity: 20, minQuantity: 10, unit: '개', location: '과학실 선반 A', expiry: '', memo: '' },
+  { id: 'inv-02', name: '과산화수소수 (30%)', category: '시약', quantity: 2, minQuantity: 3, unit: '병', location: '약품 보관함', expiry: '', memo: '' },
+  { id: 'inv-03', name: '드라이이스트', category: '식재료', quantity: 5, minQuantity: 2, unit: '봉', location: '냉장고', expiry: '', memo: '' },
+];
+
+const DEMO_STUDENTS = [
+  { uid: 's1', displayName: '홍길동', loginName: 'gildong', studentNo: '10315', status: 'active', year: new Date().getFullYear(), createdAt: new Date().toISOString() },
+  { uid: 's2', displayName: '김철수', loginName: 'chulsoo', studentNo: '20107', status: 'active', year: new Date().getFullYear(), createdAt: new Date().toISOString() },
+  { uid: 's3', displayName: '이영희', loginName: 'younghee', studentNo: '10222', status: 'active', year: new Date().getFullYear(), createdAt: new Date().toISOString() }
+];
+
+let isDemoMode = false;
+
+export function getIsDemoMode() { return isDemoMode; }
+
+function enterDemoMode() {
+  isDemoMode = true;
+
+  // store에 데모 데이터 주입
+  store.user = DEMO_USER;
+  store.settings = { ...DEMO_SETTINGS };
+  store.sessions = DEMO_SESSIONS.map(s => ({ ...s }));
+  store.privates = new Map(DEMO_SESSIONS.map(s => [s.id, {
+    goal: '', plan: '', runPlan: '', checklist: [], liveNotes: [], attendance: {},
+    safety: '', planB: '', result: '', goodPoints: '', badPoints: '',
+    nextTime: '', usage: '', estimatedCost: 8000, actualCost: 0,
+    reflection: '', reflectionSummary: '', portfolioDraft: null, recommend: '',
+    materials: [
+      { id: 'dm1', name: '페트병', quantity: 20, unit: '개', category: '소모품', status: '준비 완료', estPrice: 8000, actualPrice: 8000, vendor: '', pub: true, note: '' },
+      { id: 'dm2', name: '과산화수소수', quantity: 2, unit: '병', category: '시약', status: '구매 필요', estPrice: 12000, actualPrice: '', vendor: '', pub: true, note: '' }
+    ]
+  }]));
+  store.students = DEMO_STUDENTS.map(s => ({ ...s }));
+  store.reflections = [
+    { id: 'demo-01_s1', sessionId: 'demo-01', studentUid: 's1', rating: 5, answers: [], updatedAt: new Date().toISOString() },
+    { id: 'demo-01_s2', sessionId: 'demo-01', studentUid: 's2', rating: 4, answers: [], updatedAt: new Date().toISOString() }
+  ];
+  store.inventory = DEMO_INVENTORY.map(i => ({ ...i }));
+  store.templates = [];
+  store.loaded = true;
+
+  // 데모 배너 표시
+  const banner = el('div', {
+    style: 'background:#f59e0b;color:#1c1c1c;text-align:center;padding:6px 12px;font-size:13px;font-weight:600;letter-spacing:.02em;'
+  }, ['🔒 데모 미리보기 모드 — 저장·수정 기능은 비활성화됩니다.']);
+  document.body.prepend(banner);
+
+  applyBranding(store.settings, { suffix: '선생님용' });
+  fillTopbar(DEMO_USER, store.settings);
+  showOnly(appEl);
+  if (!location.hash) location.hash = '#/home';
+  renderRoute();
+}
+
 /* ── 시작 ────────────────────────────────────────────────────────────── */
 
 async function boot() {
@@ -253,6 +343,18 @@ async function boot() {
     return;
   }
   initFirebase();
+
+  // 로그인 화면에 데모 미리보기 버튼 추가
+  const loginCard = loginScreen.querySelector('.auth-card');
+  if (loginCard && !loginCard.querySelector('#demo-btn')) {
+    const demoBtn = el('button', {
+      id: 'demo-btn',
+      type: 'button',
+      style: 'margin-top:8px;width:100%;padding:10px;border:1.5px dashed #94a3b8;border-radius:8px;background:transparent;color:#64748b;font-size:14px;cursor:pointer;',
+      onclick: () => enterDemoMode()
+    }, ['👀 로그인 없이 미리보기 (데모 모드)']);
+    loginCard.append(demoBtn);
+  }
 
   watchAuth(async (user) => {
     if (!user) {
