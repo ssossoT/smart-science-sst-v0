@@ -8,128 +8,297 @@
 <title>스마트과학반 LAB</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e7490'/><text x='16' y='22' font-size='15' font-weight='bold' fill='white' text-anchor='middle' font-family='sans-serif'>SL</text></svg>">
 <link rel="stylesheet" href="./css/common.css">
+<link rel="stylesheet" href="./css/landing.css">
 </head>
 <body>
 
-<div class="landing">
+<div class="lp">
 
-  <header class="landing-nav">
-    <span class="brand">
-      <span class="brand-mark" data-brand-mark>SL</span>
-      <span data-site-name>스마트과학반 LAB</span>
-    </span>
-    <a class="teacher-entry" href="./teacher.html">
-      교사용 로그인 <span aria-hidden="true">→</span>
+  <header class="lp-nav">
+    <a class="lp-brand" href="./index.html">
+      <span class="lp-brand-mark">🧪</span>
+      <span class="lp-brand-text">
+        <strong data-site-name>스마트과학반 LAB</strong>
+        <small id="lp-tagline">오늘도 과학이 더 재미있는 우리!</small>
+      </span>
     </a>
+
+    <nav class="lp-tabs" aria-label="학생 화면 바로가기">
+      <a href="./student.html#/home"><span class="ico">🏠</span>홈</a>
+      <a href="./student.html#/schedule"><span class="ico">📅</span>전체 일정</a>
+      <a href="./student.html#/current"><span class="ico">📖</span>오늘의 활동</a>
+      <a href="./student.html#/materials"><span class="ico">📁</span>활동자료</a>
+      <a href="./student.html#/photos"><span class="ico">🖼️</span>활동사진</a>
+      <a href="./student.html#/result"><span class="ico">📊</span>활동 결과</a>
+      <a href="./student.html#/report"><span class="ico">✏️</span>실험 기록하기</a>
+      <a href="./student.html#/mine"><span class="ico">⭐</span>내 기록</a>
+    </nav>
+
+    <a class="lp-teacher-entry" href="./teacher.html">교사용 로그인 <span aria-hidden="true">→</span></a>
   </header>
 
-  <main class="landing-hero">
+  <main class="lp-body">
 
-    <div class="hero-deco hero-deco-1" aria-hidden="true" style="color:var(--accent)">
-      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M40 12h20"/>
-        <path d="M44 12v22L24 78a8 8 0 0 0 7 12h38a8 8 0 0 0 7-12L56 34V12"/>
-        <path d="M32 66h36"/>
-        <circle cx="49" cy="49" r="2.6" fill="currentColor" stroke="none"/>
-        <circle cx="58" cy="58" r="2" fill="currentColor" stroke="none"/>
-        <circle cx="43" cy="58" r="1.6" fill="currentColor" stroke="none"/>
-      </svg>
-    </div>
-
-    <div class="hero-deco hero-deco-2" aria-hidden="true" style="color:#e08a45">
-      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round">
-        <ellipse cx="50" cy="50" rx="42" ry="16"/>
-        <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(60 50 50)"/>
-        <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(120 50 50)"/>
-        <circle cx="50" cy="50" r="6" fill="currentColor" stroke="none"/>
-      </svg>
-    </div>
-
-    <div class="hero-deco hero-deco-3" aria-hidden="true" style="color:var(--accent)">
-      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M50 14 L58 42 L86 50 L58 58 L50 86 L42 58 L14 50 L42 42 Z"/>
-      </svg>
-    </div>
-
-    <p class="hero-eyebrow">🔬 방과후 과학 실험실</p>
-
-    <h1 class="hero-title" id="intro-text">실험으로 과학을 직접 확인하는 중학교 방과후 활동입니다.</h1>
-
-    <div class="hero-actions">
-      <a class="btn btn-primary btn-lg" href="./student.html">학생 화면 열기 <span aria-hidden="true">→</span></a>
-      <a class="btn btn-lg btn-outline" href="#info">운영 안내 보기</a>
-    </div>
-
-    <section class="hero-stats" id="info" aria-label="운영 안내">
-      <div class="stat">
-        <div class="k">운영 학년도</div>
-        <div class="v" id="info-year">—</div>
+    <!-- ── 왼쪽: 소개 패널 ─────────────────────────────────────────── -->
+    <section class="lp-promo">
+      <div class="lp-astro" aria-hidden="true">
+        <svg viewBox="0 0 120 150" fill="none">
+          <g opacity=".55">
+            <path d="M14 20 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5-6-6-2.5 6-2.5z" fill="#ffcd3c"/>
+            <circle cx="104" cy="18" r="2.4" fill="#3b6df6"/>
+            <circle cx="14" cy="70" r="2" fill="#e6ddfb"/>
+          </g>
+          <ellipse cx="60" cy="132" rx="26" ry="6" fill="#1b2340" opacity=".08"/>
+          <rect x="27" y="94" width="10" height="30" rx="5" transform="rotate(-18 32 94)" fill="#8fa5ff"/>
+          <rect x="83" y="94" width="10" height="30" rx="5" transform="rotate(18 88 94)" fill="#8fa5ff"/>
+          <rect x="38" y="62" width="44" height="52" rx="20" fill="#ffffff" stroke="#1b2340" stroke-width="3"/>
+          <circle cx="60" cy="88" r="10" fill="#3b6df6" stroke="#1b2340" stroke-width="2.5"/>
+          <path d="M40 76 q-14 4 -16 18" stroke="#1b2340" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M80 76 q14 -2 18 8" stroke="#1b2340" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="60" cy="40" r="27" fill="#ffffff" stroke="#1b2340" stroke-width="3"/>
+          <ellipse cx="60" cy="41" rx="18" ry="16" fill="#bcd6ff"/>
+          <ellipse cx="54" cy="35" rx="6" ry="5" fill="#ffffff" opacity=".7"/>
+        </svg>
       </div>
-      <div class="stat">
-        <div class="k">운영 기간</div>
-        <div class="v" id="info-period" style="font-size:15px">—</div>
+
+      <span class="lp-badge">🎒 <span data-year>2026</span> 방과후학교</span>
+
+      <h1 class="lp-title">
+        미래 과학 놀이터,<br>
+        <span class="accent" data-site-name>스마트과학반 LAB</span>
+      </h1>
+      <p class="lp-sub">호기심이 실력이 되는 특별한 과학 시간!</p>
+      <p class="lp-desc" id="lp-intro">실험하고, 만들고, 탐구하며 세상을 더 깊이 이해하는 중학생들을 위한 과학 놀이터입니다.</p>
+
+      <div class="lp-features">
+        <div class="lp-feature mint">
+          <span class="ico">🧪</span>
+          <strong>실험 중심 활동</strong>
+          <span>직접 해보는 신나는 과학 실험!</span>
+        </div>
+        <div class="lp-feature purple">
+          <span class="ico">🔭</span>
+          <strong>과학 덕후 환영</strong>
+          <span>호기심 많은 모든 친구들이 모여라</span>
+        </div>
+        <div class="lp-feature peach">
+          <span class="ico">📝</span>
+          <strong>기록이 남는 과학실</strong>
+          <span>실험, 생각, 결과를 나만의 기록으로</span>
+        </div>
       </div>
-      <div class="stat">
-        <div class="k">다음 일정</div>
-        <div class="v" id="info-next" style="font-size:15px">—</div>
-        <div class="s" id="info-next-sub"></div>
+
+      <div class="lp-teacher-card">
+        <span class="avatar">👩‍🔬</span>
+        <div>
+          <div class="name"><span data-teacher-name>성소연</span> 선생님</div>
+          <div class="quote">"작은 호기심이 세상을 바꾸는 큰 힘이 될 수 있어요. 여러분의 질문을 언제나 응원합니다."</div>
+        </div>
       </div>
+
+      <div class="lp-space">
+        <div class="lp-space-tag">✨ 궁금한 걸 그냥 두지 않는 너,</div>
+        <div class="lp-space-msg">여기가 바로 너의 놀이터야! 함께 질문하고, 함께 실험하고, 함께 성장해요.</div>
+        <div class="lp-space-stats">
+          <div class="cell"><div class="v" id="stat-total">—</div><div class="k">등록된 실험</div></div>
+          <div class="cell"><div class="v" id="stat-students">—</div><div class="k">우리 반 친구들</div></div>
+          <div class="cell"><div class="v" id="stat-done">—</div><div class="k">완료한 프로젝트</div></div>
+        </div>
+        <svg class="lp-planet" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="32" fill="#3b6df6"/>
+          <circle cx="40" cy="40" r="9" fill="#5f88ff" opacity=".7"/>
+          <circle cx="62" cy="58" r="6" fill="#274fcf" opacity=".6"/>
+          <ellipse cx="50" cy="52" rx="46" ry="10" fill="none" stroke="#ffcd3c" stroke-width="3" opacity=".85" transform="rotate(-14 50 52)"/>
+        </svg>
+      </div>
+
+      <div class="lp-cta">
+        <a class="btn btn-primary btn-lg" href="./student.html">지금, 과학 놀이터에 참여하기 <span aria-hidden="true">→</span></a>
+        <a class="btn btn-lg lp-cta-outline btn-outline" href="#lp-activity">운영 안내 더보기</a>
+      </div>
+    </section>
+
+    <!-- ── 오른쪽: 오늘의 활동 패널 ────────────────────────────────── -->
+    <section class="lp-activity" id="lp-activity">
+
+      <div class="lp-activity-head">
+        <h2>📖 오늘의 활동</h2>
+        <span class="lp-date-badge" id="lp-today">—</span>
+        <span class="lp-msg-bubble">오늘도 멋진 실험이 기다려요!</span>
+        <div class="grow"></div>
+        <a class="lp-more-link" href="./student.html#/current">오늘의 활동 더보기 →</a>
+      </div>
+
+      <div class="lp-current" id="lp-current">
+        <div class="lp-current-info">
+          <span class="lp-field-tag" id="cur-field">실험</span>
+          <h3 id="cur-title">—</h3>
+          <p id="cur-guide">아직 공개된 활동이 없습니다.</p>
+          <ul class="lp-checks" id="cur-checks"></ul>
+        </div>
+        <div class="lp-current-photo" id="cur-photo">
+          <span class="emoji">🧪</span>
+          <div class="lp-photo-note">실험은 실패해도 좋아! 그게 바로 과학이니까 🙂</div>
+        </div>
+      </div>
+
+      <div class="lp-tiles">
+        <a class="lp-tile c-mint" href="./student.html#/current">
+          <span class="ico">📖</span>
+          <span><span class="t">오늘의 활동</span><br><span class="s">오늘은 어떤 실험을 할까요?</span></span>
+        </a>
+        <a class="lp-tile c-sky" href="./student.html#/materials">
+          <span class="ico">📁</span>
+          <span><span class="t">활동자료</span><br><span class="s">실험지, 참고자료 모음</span></span>
+        </a>
+        <a class="lp-tile c-purple" href="./student.html#/photos">
+          <span class="ico">🖼️</span>
+          <span><span class="t">활동사진</span><br><span class="s">우리의 생생한 실험 현장!</span></span>
+        </a>
+        <a class="lp-tile c-yellow" href="./student.html#/result">
+          <span class="ico">📊</span>
+          <span><span class="t">활동 결과</span><br><span class="s">실험 결과와 발표 자료</span></span>
+        </a>
+        <a class="lp-tile c-peach" href="./student.html#/report">
+          <span class="ico">✏️</span>
+          <span><span class="t">실험 기록하기</span><br><span class="s">나만의 과학 노트에 기록</span></span>
+        </a>
+        <a class="lp-tile c-sky" href="./student.html#/schedule">
+          <span class="ico">📅</span>
+          <span><span class="t">전체 일정</span><br><span class="s">다가오는 실험 일정</span></span>
+        </a>
+        <a class="lp-tile c-pink" href="./student.html#/mine">
+          <span class="ico">⭐</span>
+          <span><span class="t">내 기록</span><br><span class="s">나의 활동 히스토리</span></span>
+        </a>
+      </div>
+
+      <div class="lp-columns-2">
+        <div class="lp-panel" id="lp-next-panel" hidden>
+          <div class="lp-panel-head">🚀 다음 활동</div>
+          <div class="lp-next-photo" id="next-photo">🚀</div>
+          <div class="lp-next-body">
+            <div class="d" id="next-date">—</div>
+            <h4 id="next-title">—</h4>
+            <p id="next-guide"></p>
+          </div>
+        </div>
+
+        <div class="lp-panel">
+          <div class="lp-panel-head">
+            <span>🗓️ 이번 주 일정</span>
+            <div class="grow"></div>
+            <a class="lp-link" href="./student.html#/schedule">전체 일정 보기 →</a>
+          </div>
+          <div class="lp-week" id="lp-week">
+            <div class="lp-week-empty">등록된 일정이 없습니다.</div>
+          </div>
+        </div>
+      </div>
+
     </section>
 
   </main>
 
-  <footer class="site-footer" id="footer"></footer>
+  <footer class="lp-footer" id="footer">
+    <span class="lp-brand-mini">🧪 <span data-site-name>스마트과학반 LAB</span></span>
+    <span>질문하는 너, 더 멀리 가는 과학!</span>
+    <div class="grow"></div>
+    <a href="#lp-activity" class="lp-back-top" aria-label="맨 위로">↑</a>
+  </footer>
 </div>
 
 <script type="module">
-import { loadSettings, listPublicSessions, DEFAULT_SETTINGS } from './js/firebase-service.js';
-import { applyBranding, studentFooterHtml } from './js/common.js';
+import { loadSettings, listPublicSessions, listStudents, DEFAULT_SETTINGS } from './js/firebase-service.js';
+import { applyBranding, sessionTitle, pickCurrentSession, nextSessionAfter } from './js/common.js';
 import { fmtDate, relativeDay, esc } from './js/ui.js';
 
-const footer = document.getElementById('footer');
+const FIELD_EMOJI = {
+  물리: '⚛️', 화학: '🧪', 생명: '🧬', 지구과학: '🌍',
+  천문: '🔭', 디지털: '💻', 제작: '🛠️', 기타: '🔬'
+};
+const FIELD_PHOTO = {
+  물리: ['#8fc6ff', '#3b6df6'], 화학: ['#a8f0c6', '#12b76a'], 생명: ['#c9f2d8', '#2f9e6b'],
+  지구과학: ['#bfe3ff', '#1c64c9'], 천문: ['#c8c2ff', '#5b3fd6'], 디지털: ['#ffd08a', '#ff7a59'],
+  제작: ['#ffd9a8', '#e08a45'], 기타: ['#d7ecff', '#3b6df6']
+};
 
-function render(settings, nextSession) {
-  applyBranding(settings);
-
-  document.getElementById('intro-text').textContent =
-    settings.intro || DEFAULT_SETTINGS.intro;
-
-  document.getElementById('info-year').textContent =
-    settings.year ? `${settings.year}학년도` : '—';
-
-  const start = settings.periodStart ? fmtDate(settings.periodStart, { withWeek: false }) : '';
-  const end = settings.periodEnd ? fmtDate(settings.periodEnd, { withWeek: false }) : '';
-  document.getElementById('info-period').textContent =
-    start && end ? `${start} ~ ${end}` : '—';
-
-  const nextEl = document.getElementById('info-next');
-  const subEl = document.getElementById('info-next-sub');
-  if (nextSession?.date) {
-    nextEl.textContent = fmtDate(nextSession.date);
-    subEl.textContent = [relativeDay(nextSession.date), nextSession.periodLabel].filter(Boolean).join(' · ');
-  } else {
-    nextEl.textContent = '—';
-    subEl.textContent = '';
-  }
-
-  footer.innerHTML = studentFooterHtml(settings);
-}
+function fieldEmoji(f) { return FIELD_EMOJI[f] || '🔬'; }
 
 async function boot() {
-  // 첫 화면은 로그인 없이 열리므로, 이 브라우저에 저장된 운영 정보만 읽는다.
   const settings = await loadSettings();
-  let next = null;
+  applyBranding(settings);
+  document.getElementById('lp-tagline').textContent = settings.siteName ? '오늘도 과학이 더 재미있는 우리!' : '';
+  document.getElementById('lp-intro').textContent = settings.intro || DEFAULT_SETTINGS.intro;
+
+  let sessions = [];
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const sessions = await listPublicSessions(settings.year);
-    next = sessions
-      .filter(s => !s.noClass && s.date && new Date(`${s.date}T00:00:00`) >= today)
-      .sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+    sessions = await listPublicSessions(settings.year);
   } catch (e) {
-    console.warn('[landing] 안내 정보를 불러오지 못했습니다.', e);
+    console.warn('[landing] 일정을 불러오지 못했습니다.', e);
   }
-  render(settings, next);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  document.getElementById('lp-today').textContent = fmtDate(today.toISOString().slice(0, 10), { withYear: true });
+
+  // 통계
+  let studentCount = 0;
+  try { studentCount = (await listStudents(settings.year)).filter(s => s.status !== 'inactive').length; }
+  catch (e) { /* 무시 */ }
+  const doneCount = sessions.filter(s => !s.noClass && ['done', 'archived'].includes(s.status)).length;
+  const totalCount = sessions.filter(s => !s.noClass).length;
+  document.getElementById('stat-total').textContent = totalCount;
+  document.getElementById('stat-students').textContent = studentCount;
+  document.getElementById('stat-done').textContent = doneCount;
+
+  // 오늘의 활동
+  const current = pickCurrentSession(sessions);
+  if (current) {
+    document.getElementById('cur-field').textContent = `${fieldEmoji(current.field)} ${current.field || '실험'}`;
+    document.getElementById('cur-title').textContent = sessionTitle(current);
+    document.getElementById('cur-guide').textContent = current.studentGuide || '활동 안내가 아직 등록되지 않았습니다.';
+
+    const checksEl = document.getElementById('cur-checks');
+    const checks = [
+      fmtDate(current.date, { withYear: true }) + (current.periodLabel ? ` · ${current.periodLabel}` : ''),
+      relativeDay(current.date),
+      (current.publicMaterials || []).length ? `준비물 ${current.publicMaterials.length}종 확인하기` : null
+    ].filter(Boolean);
+    checksEl.innerHTML = checks.map(c => `<li>${esc(c)}</li>`).join('');
+
+    const photoEl = document.getElementById('cur-photo');
+    const [a, b] = FIELD_PHOTO[current.field] || FIELD_PHOTO['기타'];
+    photoEl.style.setProperty('--photo-a', a);
+    photoEl.style.setProperty('--photo-b', b);
+    photoEl.querySelector('.emoji').textContent = fieldEmoji(current.field);
+  }
+
+  // 다음 활동
+  const next = current ? nextSessionAfter(sessions, current.id) : sessions.find(s => !s.noClass);
+  if (next) {
+    document.getElementById('lp-next-panel').hidden = false;
+    document.getElementById('next-photo').textContent = fieldEmoji(next.field);
+    document.getElementById('next-date').textContent = fmtDate(next.date, { withYear: true }) + (next.periodLabel ? ` · ${next.periodLabel}` : '');
+    document.getElementById('next-title').textContent = sessionTitle(next);
+    document.getElementById('next-guide').textContent = next.studentGuide || '';
+  }
+
+  // 이번 주 일정 (다가오는 순서로 최대 4개)
+  const upcoming = sessions
+    .filter(s => s.date && new Date(`${s.date}T00:00:00`) >= today)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 4);
+  const weekEl = document.getElementById('lp-week');
+  if (upcoming.length) {
+    weekEl.innerHTML = upcoming.map(s => `
+      <div class="lp-week-row">
+        <span class="day">${esc(fmtDate(s.date).slice(-3))} ${Number(s.date.slice(5,7))}/${Number(s.date.slice(8,10))}</span>
+        <span class="ico">${s.noClass ? '💤' : fieldEmoji(s.field)}</span>
+        <span class="t">${esc(sessionTitle(s))}</span>
+      </div>`).join('');
+  }
+
 }
 
 boot();

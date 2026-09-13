@@ -487,113 +487,8 @@ table.tbl .nowrap { white-space: nowrap; }
 .site-footer strong { color: var(--text-2); font-weight: 600; }
 
 /* ==========================================================================
-   메인 진입 화면 (index.html) - 학생을 위한 첫 화면
-   따뜻한 톤 + 손그림 느낌의 포인트 일러스트로 딱딱하지 않게 구성한다.
-   교사용 진입은 우측 상단의 작은 버튼 하나로만 남겨둔다.
+   첫 화면(index.html) 전용 스타일은 css/landing.css 에 따로 둔다.
    ========================================================================== */
-.landing {
-  --landing-bg:        #f8f4ea;
-  --landing-bg-2:      #fffaf0;
-  --landing-ink:       #211a10;
-  --landing-warm:      #e08a45;
-  --landing-warm-soft: #fbe6cf;
-
-  min-height: 100dvh;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto 1fr auto;
-  background:
-    radial-gradient(900px 460px at 84% -120px, #ffe7c2 0%, rgba(255, 231, 194, 0) 65%),
-    radial-gradient(760px 420px at 4% 6%, #d9f0ee 0%, rgba(217, 240, 238, 0) 60%),
-    var(--landing-bg);
-  color: var(--landing-ink);
-  overflow-x: clip;
-}
-
-.landing-nav {
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px 12px;
-  padding: 18px 24px;
-}
-.landing-nav .brand { color: var(--landing-ink); }
-
-.teacher-entry {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px;
-  border: 1.5px solid var(--landing-ink);
-  border-radius: 100px;
-  font-size: 13px; font-weight: 700;
-  color: var(--landing-ink);
-  background: var(--landing-bg-2);
-  white-space: nowrap;
-  transition: background .14s, transform .14s;
-}
-.teacher-entry:hover { background: #fff; transform: translateY(-1px); text-decoration: none; }
-.teacher-entry span { display: inline-block; transition: transform .14s; }
-.teacher-entry:hover span { transform: translateX(2px); }
-
-.landing-hero {
-  position: relative;
-  display: flex; flex-direction: column; align-items: center;
-  text-align: center;
-  padding: 28px 24px 48px;
-  gap: 26px;
-}
-
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 14px;
-  border-radius: 100px;
-  background: var(--landing-warm-soft);
-  color: #8a4816;
-  font-size: 12.5px; font-weight: 700;
-}
-
-.hero-title {
-  max-width: 760px;
-  font-size: clamp(28px, 5.4vw, 52px);
-  font-weight: 800;
-  letter-spacing: -.03em;
-  line-height: 1.28;
-}
-
-.hero-actions {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
-  width: 100%;
-}
-.hero-actions .btn { border-radius: 100px; padding: 0 26px; }
-.hero-actions .btn-primary {
-  background: var(--landing-ink); border-color: var(--landing-ink);
-}
-.hero-actions .btn-primary:hover { background: #000; border-color: #000; }
-.hero-actions .btn-outline {
-  background: transparent; border: 1.5px solid var(--landing-ink); color: var(--landing-ink);
-}
-.hero-actions .btn-outline:hover { background: var(--landing-bg-2); }
-
-.hero-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-  width: 100%; max-width: 660px;
-  margin-top: 4px;
-}
-.hero-stats .stat {
-  background: rgba(255, 255, 255, .82);
-  border-color: rgba(33, 26, 16, .12);
-  text-align: left;
-}
-
-.hero-deco { position: absolute; opacity: .9; pointer-events: none; }
-.hero-deco-1 { top: 4%;   left: 5%;  width: 76px; transform: rotate(-8deg); }
-.hero-deco-2 { top: 10%;  right: 6%; width: 92px; transform: rotate(10deg); }
-.hero-deco-3 { bottom: 2%; left: 11%; width: 50px; transform: rotate(-6deg); }
-.hero-deco svg { width: 100%; height: auto; display: block; }
-
-@media (max-width: 900px) {
-  .hero-deco { display: none; }
-}
 
 .brand {
   display: inline-flex; align-items: center; gap: 9px;
@@ -660,9 +555,6 @@ table.tbl .nowrap { white-space: nowrap; }
 @media (max-width: 720px) {
   .form-grid.cols-2, .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: 1fr; }
   .span-2 { grid-column: span 1; }
-  .landing-hero { gap: 18px; padding-top: 12px; }
-  .landing-nav { padding: 14px 16px; }
-  .teacher-entry { padding: 7px 13px; font-size: 12.5px; }
 }
 
 /* 터치 기기에서 버튼을 충분히 크게 */

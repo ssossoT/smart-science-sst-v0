@@ -493,6 +493,11 @@ async function enterApp(student) {
   state.myReflections = myReflections;
   state.current = pickCurrentSession(sessions);
 
+  // 첫 화면의 바로가기(예: student.html#/schedule)로 들어온 경우 해당 탭에서 시작한다.
+  const wanted = (location.hash || '').replace(/^#\/?/, '');
+  if (TABS.some(([key]) => key === wanted)) state.tab = wanted;
+  history.replaceState(null, '', location.pathname);
+
   buildNav();
   renderView();
   showOnly(appEl);
