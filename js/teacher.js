@@ -207,9 +207,7 @@ loginForm?.addEventListener('submit', async (e) => {
 $('#logout-btn')?.addEventListener('click', async () => {
   if (!(await confirmLeaveIfDirty())) return;
   clearDirty();
-  showOnly(loginScreen);
-  location.hash = '';
-  setTimeout(() => $('#login-name')?.focus(), 60);
+  location.href = './index.html';
 });
 
 function fillTopbar(user, settings) {

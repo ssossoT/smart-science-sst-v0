@@ -85,22 +85,8 @@ loginForm?.addEventListener('submit', async (e) => {
 
 $('#logout-btn')?.addEventListener('click', async () => {
   if (!(await confirmLeaveIfDirty())) return;
-  doLogout();
+  location.href = './index.html';
 });
-
-function doLogout() {
-  // 화면에서 개인 정보를 즉시 지운다.
-  state.student = null;
-  state.settings = null;
-  state.sessions = [];
-  state.myReflections = [];
-  state.current = null;
-  clear(viewEl);
-  clear(navEl);
-  $('#me-name').textContent = '';
-  showOnly(loginScreen);
-  setTimeout(() => $('#login-name')?.focus(), 60);
-}
 
 /* ── 화면 ────────────────────────────────────────────────────────────── */
 
