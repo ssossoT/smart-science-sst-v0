@@ -246,7 +246,19 @@ async function enterApp() {
 
 /* ── 시작 ────────────────────────────────────────────────────────────── */
 
+/** 첫 화면(index.html) 팝업에서 이미 로그인을 확인했다면 로그인 화면을 건너뛴다. */
+function consumeAutoLogin() {
+  const raw = sessionStorage.getItem('smartlab:auto-login');
+  sessionStorage.removeItem('smartlab:auto-login');
+  if (!raw) return false;
+  try { return JSON.parse(raw)?.role === 'teacher'; } catch { return false; }
+}
+
 function boot() {
+  if (consumeAutoLogin()) {
+    enterApp();
+    return;
+  }
   showOnly(loginScreen);
   setTimeout(() => $('#login-name')?.focus(), 60);
 }

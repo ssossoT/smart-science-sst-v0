@@ -7,7 +7,7 @@
    ========================================================================== */
 
 import {
-  DEFAULT_REPORT_QUESTIONS, DEFAULT_SETTINGS, checkStudentLogin,
+  DEFAULT_REPORT_QUESTIONS, DEFAULT_SETTINGS, checkStudentLogin, getStudentDoc,
   loadSettings, listPublicSessions, listMyReflections, saveReflection
 } from './firebase-service.js';
 import { applyBranding, sessionTitle, pickCurrentSession } from './common.js';
@@ -505,8 +505,29 @@ async function enterApp(student) {
 
 /* ── 시작 ────────────────────────────────────────────────────────────── */
 
-function boot() {
+/** 첫 화면(index.html) 팝업에서 이미 로그인을 확인했다면 그 학생으로 바로 들어간다. */
+async function consumeAutoLogin() {
+  const raw = sessionStorage.getItem('smartlab:auto-login');
+  sessionStorage.removeItem('smartlab:auto-login');
+  if (!raw) return null;
+  try {
+    const data = JSON.parse(raw);
+    if (data?.role !== 'student' || !data.uid) return null;
+    return await getStudentDoc(data.uid);
+  } catch {
+    return null;
+  }
+}
+
+async function boot() {
   applyBranding(DEFAULT_SETTINGS, { suffix: '학생용' });
+
+  const student = await consumeAutoLogin();
+  if (student) {
+    await enterApp(student);
+    return;
+  }
+
   showOnly(loginScreen);
   setTimeout(() => $('#login-name')?.focus(), 60);
 }

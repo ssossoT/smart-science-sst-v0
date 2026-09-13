@@ -209,9 +209,92 @@
 </div>
 
 <script type="module">
-import { loadSettings, listPublicSessions, listStudents, DEFAULT_SETTINGS } from './js/firebase-service.js';
+import { loadSettings, listPublicSessions, listStudents, checkStudentLogin, DEFAULT_SETTINGS } from './js/firebase-service.js';
+import { TEACHER_ACCOUNT } from './js/demo-data.js';
 import { applyBranding, sessionTitle, pickCurrentSession, nextSessionAfter } from './js/common.js';
-import { fmtDate, relativeDay, esc } from './js/ui.js';
+import { fmtDate, relativeDay, esc, el, openModal } from './js/ui.js';
+
+/* ── 로그인 팝업 ─────────────────────────────────────────────────────
+   교사/학생 화면으로 바로 이동하지 않고, 이 화면에서 팝업으로 로그인만
+   확인한 뒤 해당 화면으로 들어간다. (sessionStorage 에 한 번만 쓰는
+   플래그를 남기고, teacher.js/student.js 가 그 플래그를 보고 로그인
+   화면을 건너뛴다.) */
+
+const AUTO_LOGIN_KEY = 'smartlab:auto-login';
+
+function loginForm({ namePlaceholder }) {
+  const nameInput = el('input', { class: 'input', placeholder: namePlaceholder, autocomplete: 'username', maxlength: 40 });
+  const pwInput = el('input', { class: 'input', type: 'password', autocomplete: 'current-password', maxlength: 72 });
+  const errorBox = el('div', { class: 'auth-error', hidden: true });
+  const form = el('form', { id: `f-${Math.random().toString(36).slice(2)}` }, [
+    el('div', { class: 'field mb-12' }, [el('label', { text: '이름' }), nameInput]),
+    el('div', { class: 'field mb-12' }, [el('label', { text: '비밀번호' }), pwInput]),
+    errorBox
+  ]);
+  function showError(msg) { errorBox.textContent = msg; errorBox.hidden = false; pwInput.value = ''; }
+  return { form, nameInput, pwInput, showError };
+}
+
+function openTeacherLogin() {
+  const { form, nameInput, pwInput, showError } = loginForm({ namePlaceholder: '성소연' });
+  const cancelBtn = el('button', { class: 'btn', type: 'button' }, ['취소']);
+  const submitBtn = el('button', { class: 'btn btn-primary', type: 'submit' }, ['로그인']);
+  submitBtn.setAttribute('form', form.id);
+  const m = openModal({ title: '선생님용 로그인', body: form, footer: [cancelBtn, el('div', { class: 'grow' }), submitBtn] });
+  cancelBtn.addEventListener('click', () => m.close());
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (nameInput.value.trim() === TEACHER_ACCOUNT.name && pwInput.value === TEACHER_ACCOUNT.password) {
+      sessionStorage.setItem(AUTO_LOGIN_KEY, JSON.stringify({ role: 'teacher' }));
+      location.href = './teacher.html';
+    } else {
+      showError('이름 또는 비밀번호를 확인해 주세요.');
+    }
+  });
+}
+
+function openStudentLogin(tab) {
+  const { form, nameInput, pwInput, showError } = loginForm({ namePlaceholder: '홍길동' });
+  const cancelBtn = el('button', { class: 'btn', type: 'button' }, ['취소']);
+  const submitBtn = el('button', { class: 'btn btn-primary', type: 'submit' }, ['로그인']);
+  submitBtn.setAttribute('form', form.id);
+  const m = openModal({ title: '학생 로그인', body: form, footer: [cancelBtn, el('div', { class: 'grow' }), submitBtn] });
+  cancelBtn.addEventListener('click', () => m.close());
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    const pw = pwInput.value;
+    if (!name || !pw) { showError('이름과 비밀번호를 모두 입력해 주세요.'); return; }
+    const restore = busySubmit(submitBtn);
+    try {
+      const student = await checkStudentLogin(name, pw);
+      if (!student) { showError('이름 또는 비밀번호를 확인해 주세요.'); return; }
+      sessionStorage.setItem(AUTO_LOGIN_KEY, JSON.stringify({ role: 'student', uid: student.uid }));
+      location.href = tab ? `./student.html#/${tab}` : './student.html';
+    } finally { restore(); }
+  });
+}
+
+function busySubmit(btn) {
+  btn.disabled = true;
+  const text = btn.textContent;
+  btn.textContent = '확인 중…';
+  return () => { btn.disabled = false; btn.textContent = text; };
+}
+
+function wireLoginLinks() {
+  document.querySelector('.lp-teacher-entry')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openTeacherLogin();
+  });
+  document.querySelectorAll('a[href^="./student.html"]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tab = (a.getAttribute('href').split('#/')[1] || '').trim();
+      openStudentLogin(tab || null);
+    });
+  });
+}
 
 const FIELD_EMOJI = {
   물리: '⚛️', 화학: '🧪', 생명: '🧬', 지구과학: '🌍',
@@ -226,6 +309,7 @@ const FIELD_PHOTO = {
 function fieldEmoji(f) { return FIELD_EMOJI[f] || '🔬'; }
 
 async function boot() {
+  wireLoginLinks();
   const settings = await loadSettings();
   applyBranding(settings);
   document.getElementById('lp-tagline').textContent = settings.siteName ? '오늘도 과학이 더 재미있는 우리!' : '';
