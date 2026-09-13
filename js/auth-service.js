@@ -1,7 +1,7 @@
 /* ==========================================================================
    인증 계층
    --------------------------------------------------------------------------
-   선생님 : Google 계정 로그인 → admins/{uid} 문서가 있어야 관리 화면 접근 가능
+   선생님 : (데모용) 로그인 없이 바로 미리보기 화면으로 진입한다. teacher.js 참고.
    학생   : 이름(로그인 이름) + 비밀번호
             서버(/api/auth/resolve-student-login)에서 내부 인증 이메일만 받아
             Firebase Email/Password 로그인을 수행한다.
@@ -17,27 +17,9 @@ import {
   initFirebase, getAuthInstance,
   GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword,
   signOut, onAuthStateChanged, linkWithPopup,
-  setPersistence, browserLocalPersistence, browserSessionPersistence,
-  isAdminUid, getStudentDoc, callApi, loadSettings, ApiError
+  setPersistence, browserSessionPersistence,
+  getStudentDoc, callApi, loadSettings, ApiError
 } from './firebase-service.js';
-
-/* ── 선생님 ──────────────────────────────────────────────────────────── */
-
-export async function loginTeacherWithGoogle() {
-  initFirebase();
-  const auth = getAuthInstance();
-  await setPersistence(auth, browserLocalPersistence);
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  const cred = await signInWithPopup(auth, provider);
-  return cred.user;
-}
-
-/** 로그인한 Google 계정이 관리자로 등록되어 있는지 확인 */
-export async function verifyAdmin(user) {
-  if (!user) return false;
-  return isAdminUid(user.uid);
-}
 
 /* ── 학생 ────────────────────────────────────────────────────────────── */
 

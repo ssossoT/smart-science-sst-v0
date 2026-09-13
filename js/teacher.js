@@ -3,15 +3,15 @@
    ========================================================================== */
 
 import {
-  firebaseReady, initFirebase, DEFAULT_SETTINGS
+  firebaseReady, initFirebase
 } from './firebase-service.js';
 import {
-  loginTeacherWithGoogle, verifyAdmin, logout, watchAuth, renderSetupNotice
+  logout, renderSetupNotice
 } from './auth-service.js';
 import { store, loadAll, onStoreChange } from './store.js';
 import { applyBranding } from './common.js';
 import {
-  $, el, mount, clear, toast, toastError, emptyState, skeleton,
+  $, el, mount, clear, emptyState, skeleton,
   confirmLeaveIfDirty, clearDirty
 } from './ui.js';
 
@@ -52,8 +52,6 @@ const NAV_GROUPS = [
 /* ── 요소 ────────────────────────────────────────────────────────────── */
 
 const bootScreen  = $('#boot-screen');
-const loginScreen = $('#login-screen');
-const deniedScreen = $('#denied-screen');
 const appEl      = $('#app');
 const navEl      = $('#nav');
 const viewEl     = $('#view');
@@ -67,7 +65,7 @@ let navigating = false;
 /* ── 화면 전환 ───────────────────────────────────────────────────────── */
 
 function showOnly(node) {
-  [bootScreen, loginScreen, deniedScreen, appEl].forEach(n => {
+  [bootScreen, appEl].forEach(n => {
     if (n) n.hidden = n !== node;
   });
 }
@@ -182,55 +180,14 @@ $('#menu-toggle')?.addEventListener('click', () => {
 });
 
 /* ── 인증 흐름 ───────────────────────────────────────────────────────── */
-
-const loginError = $('#login-error');
-
-function showLoginError(message) {
-  loginError.textContent = message;
-  loginError.hidden = !message;
-}
-
-$('#google-login')?.addEventListener('click', async (e) => {
-  const btn = e.currentTarget;
-  showLoginError('');
-  btn.disabled = true;
-  try {
-    await loginTeacherWithGoogle();
-    // 이후 처리는 watchAuth 에서 이어진다.
-  } catch (err) {
-    console.error('[auth] 로그인 실패', err);
-    if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
-      showLoginError('로그인 창이 닫혔습니다. 다시 시도해 주세요.');
-    } else if (err?.code === 'auth/unauthorized-domain') {
-      showLoginError('이 주소가 Firebase 승인된 도메인에 등록되어 있지 않습니다.');
-    } else {
-      showLoginError('로그인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
-    }
-  } finally {
-    btn.disabled = false;
-  }
-});
+/* 데모용 화면이므로 로그인 절차 없이 바로 미리보기로 진입한다.
+   (예전 Google 로그인 · 관리자 확인 흐름은 제거했다.) */
 
 $('#logout-btn')?.addEventListener('click', async () => {
   if (!(await confirmLeaveIfDirty())) return;
   clearDirty();
   await logout();
   location.reload();
-});
-
-$('#denied-logout')?.addEventListener('click', async () => {
-  await logout();
-  location.reload();
-});
-
-$('#denied-copy')?.addEventListener('click', async () => {
-  const uid = $('#denied-uid').textContent;
-  try {
-    await navigator.clipboard.writeText(uid);
-    toast('UID를 복사했습니다.', 'ok');
-  } catch {
-    toastError('복사하지 못했습니다. 직접 선택해 주세요.');
-  }
 });
 
 function fillTopbar(user, settings) {
@@ -344,55 +301,8 @@ async function boot() {
   }
   initFirebase();
 
-  // 로그인 화면에 데모 미리보기 버튼 추가
-  const loginCard = loginScreen.querySelector('.auth-card');
-  if (loginCard && !loginCard.querySelector('#demo-btn')) {
-    const demoBtn = el('button', {
-      id: 'demo-btn',
-      type: 'button',
-      style: 'margin-top:8px;width:100%;padding:10px;border:1.5px dashed #94a3b8;border-radius:8px;background:transparent;color:#64748b;font-size:14px;cursor:pointer;',
-      onclick: () => enterDemoMode()
-    }, ['👀 로그인 없이 미리보기 (데모 모드)']);
-    loginCard.append(demoBtn);
-  }
-
-  watchAuth(async (user) => {
-    if (!user) {
-      showOnly(loginScreen);
-      applyBranding(DEFAULT_SETTINGS, { suffix: '선생님용' });
-      return;
-    }
-
-    showOnly(bootScreen);
-    let isAdmin = false;
-    try {
-      isAdmin = await verifyAdmin(user);
-    } catch (e) {
-      console.error('[auth] 권한 확인 실패', e);
-    }
-
-    if (!isAdmin) {
-      $('#denied-uid').textContent = user.uid;
-      showOnly(deniedScreen);
-      return;
-    }
-
-    store.user = user;
-    try {
-      await loadAll({ force: true });
-    } catch (e) {
-      console.error('[boot] 데이터 적재 실패', e);
-      toastError('데이터를 불러오지 못했습니다. 보안 규칙 배포 상태를 확인해 주세요.');
-      store.settings = store.settings || { ...DEFAULT_SETTINGS };
-    }
-
-    applyBranding(store.settings, { suffix: '선생님용' });
-    fillTopbar(user, store.settings);
-    showOnly(appEl);
-
-    if (!location.hash) location.hash = '#/home';
-    await renderRoute();
-  });
+  // 로그인 절차 없이 누구나 바로 선생님용 화면(데모 미리보기)에 들어간다.
+  enterDemoMode();
 }
 
 window.addEventListener('hashchange', () => {
